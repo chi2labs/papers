@@ -1,0 +1,68 @@
+---
+title: "ETL_01"
+author: "Aleksander Dietrichson, PhD"
+date: "4/3/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(RMariaDB)
+library(DBI)
+library(dplyr)
+library(dbplyr)
+
+```
+
+## Purpose
+
+ETL for the paper. Tries to access data online from the emergency onlined course "Gramática".
+
+## Connect to Database
+
+```{r}
+con <-   DBI::dbConnect(
+    RMariaDB::MariaDB(),
+    user =  "admin",
+    password = "3QswrjCk63",
+    dbname = "chi2mobilececi",
+    host = "ethergeist3.cnofwrjuv43b.us-east-1.rds.amazonaws.com",
+    bigint = "integer64"
+  )
+```
+
+## Explore tables
+
+```{r}
+  DBI::dbListTables(con)
+```
+
+```{r}
+tbl(con,"users") %>% 
+  left_join(tbl(con,"user_role"), by = "user_id") %>% 
+  left_join(tbl(con, "roles"), by = "role_id") %>% 
+  collect() -> users 
+readr::write_rds(users, here::here("data","users.rds"))
+```
+
+```{r}
+quiz_answers <- 
+  tbl(con,"quiz_answers") %>% 
+  left_join(tbl(con, "quiz_questions")) %>% 
+  left_join(tbl(con,"request_instances")) %>% 
+  collect()
+readr::write_rds(quiz_answers, here::here("data","quiz_answers.rds"))
+```
+
+```{r}
+tbl(con, "events")
+```
+
+```{r}
+tbl(con,"feedback_requests")
+```
+
+```{r}
+tbl(con, "quiz")
+```
+
