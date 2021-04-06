@@ -1,126 +1,214 @@
 ---
-title: "Chi Square Mobile for Emergency Onlined Courses: A Case Study."
-authors:
-  - name: Aleksander Dietrichson
-    affiliation: Chi Square Laboratories
-    location: New York, NY 10023
-    email: sasha@chi2labs.com
-  - name: "Cecilia Magadán"
-    department: Centro de estudios lingüísticos en Sociedad
-    affiliation: Universidad de San Martin
-    location: San Martín, Buenos Aires. Argentina
-    email: ceciliamagadan@gmail.com
-abstract: |
-  At the onset of the COVID pandemic, thousands of courses were emergency onlined. 
-  As a response to these new and unfamiliar conditions a mobile app was developed and deployed to 
-  mitigate some of the learning loss produced. This paper presents experiences and related findings
-  from this deployment.Enter the text of your abstract here.
+title: |
+  \begin{center}\rule{1\linewidth}{2pt}\end{center}
+  \text{Chi Square Mobile for Emergency Onlined Courses}
+  \text{Field Test Results}
+  \begin{center}\rule{1\linewidth}{2pt}\end{center}
+subtitle: |
+  A Preprint
+date: "April 3 2021"
 keywords:
-  - blah
-  - blee
-  - bloo
-  - these are optional and can be removed
+  - Emergency onlined courses
+  - Learning Analytics
+  - Learning Loss
+  - Covid Pandemic
 bibliography: references.bib
 biblio-style: unsrt
 output: 
-  rticles::arxiv_article:
+  bookdown::pdf_document2:
+    toc: false
     keep_tex: true
+    extra_dependencies: ["float"]
 ---
 
-# Introduction
+```{r setup, include=FALSE}
+library(tidyverse)
+knitr::opts_chunk$set(echo=FALSE, message=FALSE)
+knitr::opts_chunk$set(fig.pos = "H", out.extra = "")
 
-\lipsum[2]
-\lipsum[3]
+## Data 
+participants <- read_rds(here::here("data","users.rds"))
+quiz_answers <- read_rds(here::here("data","quiz_answers.rds"))
 
-# Headings: first level
-\label{sec:headings}
+# filter out some participants
+participants <- participants %>% 
+  filter(!last_name%in% c("Magadán", "Dietrichson","Pagnone"))
 
-\lipsum[4] See Section \ref{sec:headings}.
+theme_set(theme_minimal())
+update_geom_defaults("bar", list(fill="red"))
+update_geom_defaults("line", list(color="red"))
 
-## Headings: second level
-\lipsum[5]
-
-$$
-\xi _{ij}(t)=P(x_{t}=i,x_{t+1}=j|y,v,w;\theta)= {\frac {\alpha _{i}(t)a^{w_t}_{ij}\beta _{j}(t+1)b^{v_{t+1}}_{j}(y_{t+1})}{\sum _{i=1}^{N} \sum _{j=1}^{N} \alpha _{i}(t)a^{w_t}_{ij}\beta _{j}(t+1)b^{v_{t+1}}_{j}(y_{t+1})}}
-$$
-
-### Headings: third level
-\lipsum[6]
-
-\paragraph{Paragraph}
-\lipsum[7]
-
-# Examples of citations, figures, tables, references
-\label{sec:others}
-
-\lipsum[8] some text [@kour2014real; @kour2014fast] and see @hadash2018estimate.
-
-The documentation for \verb+natbib+ may be found at
-\begin{center}
-  \url{http://mirrors.ctan.org/macros/latex/contrib/natbib/natnotes.pdf}
-\end{center}
-Of note is the command \verb+\citet+, which produces citations
-appropriate for use in inline text.  For example,
-
-\begin{verbatim}
-   \citet{hasselmo} investigated\dots
-\end{verbatim}
-
-produces
-
-\begin{quote}
-  Hasselmo, et al.\ (1995) investigated\dots
-\end{quote}
-
-\begin{center}
-  \url{https://www.ctan.org/pkg/booktabs}
-\end{center}
-
-
-## Figures
-
-\lipsum[10] 
-See Figure \ref{fig:fig1}. Here is how you add footnotes. [^Sample of the first footnote.]
-
-\lipsum[11] 
-
-\begin{figure}
-  \centering
-  \fbox{\rule[-.5cm]{4cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
-  \caption{Sample figure caption.}
-  \label{fig:fig1}
-\end{figure}
-
-```{r}
-plot(mtcars$mpg)
 ```
 
 
-## Tables
+```{=tex}
+\begin{table}[ht]
+\centering % used for centering table
+\begin{tabular}{c c c c} % centered columns (2 columns)
 
-\lipsum[12]
+\textbf{Aleksander Dietrichson} &  & & \textbf{Cecilia Magadán} \\ 
+Chi Square Laboriatories & & & Centro de Estudios Lingüísticos en Sociedad\\
+New York, NY 10023 &  &     &Universidad San Martín\\
+dietrichson@gmail.com   &  & &Buenos Aires, Argentina\\
+                      &   & & ceciliamagadan@gmail.com \\
 
-See awesome Table~\ref{tab:table}.
-
-\begin{table}
- \caption{Sample table title}
-  \centering
-  \begin{tabular}{lll}
-    \toprule
-    \multicolumn{2}{c}{Part}                   \\
-    \cmidrule(r){1-2}
-    Name     & Description     & Size ($\mu$m) \\
-    \midrule
-    Dendrite & Input terminal  & $\sim$100     \\
-    Axon     & Output terminal & $\sim$10      \\
-    Soma     & Cell body       & up to $10^6$  \\
-    \bottomrule
-  \end{tabular}
-  \label{tab:table}
+\end{tabular}
+\label{table:nonlin} % is used to refer this table in the text
 \end{table}
+```
 
-## Lists
 
-- Lorem ipsum dolor sit amet
-- consectetur adipiscing elit. 
-- Aliquam dignissim blandit est, in dictum tortor gravida eget. In ac rutrum magna.
+
+
+```{=tex}
+\begin{abstract}
+
+At the onset of the COVID pandemic, thousands of courses were emergency onlined.
+
+As a response to these new and unfamiliar conditions a mobile app was developed and deployed to
+
+mitigate some of the learning loss produced. This paper presents experiences and related findings
+
+from this deployment.
+
+\end{abstract}
+```
+
+---
+
+# Introduction 
+In the Republic of Argentina the COVID-19 pandemic was declared toward the end of February of 2020. Our geographic location in the southern hemisphere meant that it his toward the end of summer, with most schools coming off a two-month summer break. The emergency measures put in place by public health authorities meant that thousands of courses which would normallly be taught in a face-to-face setting would now have to be onlined. While most institutions have access to learning management systems, these sytems were unfamiliar to most instructors and widely deemed unsuited for the purpose, and most instructors opted for a synchronous format using some kind of videoconferencing system such as Meet, Teams or Big Blue Button. Legal and administrative requirements stating that a course session needed to have a start and end time also tilted the weight in favor of these options. 
+
+# The Concept of Learning Loss 
+
+## Non verbal communication
+
+# The Chi Square Mobile App 
+
+In the given 
+
+Build with several R packages: [@shinyMobile:2020]
+
+
+In Figure \ref{fig:studentapp} we see the main interfaces.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=5cm]{images/outputfile_4.png}
+\includegraphics[width=5cm]{images/outputfile_5.png}
+\includegraphics[width=5cm]{images/outputfile_6.png}
+\caption{Main App Interfaces for the Student}
+\label{fig:studentapp}
+\end{figure}
+
+
+Figure \@ref(fig:instructorapp) Shows some of the interfaces available for the instructor.
+
+
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=5cm]{images/outputfile_5006.png}
+\includegraphics[width=5cm]{images/outputfile_1002.png}
+\includegraphics[width=5cm]{images/outputfile_2003.png}
+\caption{Main App Interfaces for the Instructor}
+\label{fig:instructorapp}
+\end{figure}
+
+
+# Context and Participants
+
+A cohort of `r nrow(participants)` students, enrolled in *Gramatica*, an introductory level linguistic course taught by one of the authors, were asked to download and install the application on their devices. A total of `r quiz_answers$respondent_id %>% unique %>% length` complied with these instructions and responded at least once. The course had a duration of sixteen weeks, with additional final exam options at the end of the semester. Figure \ref{fig:respondents-per-week} shows the number of students who responded to the request for feedback during the semester. We see a sharp drop-off in week six, and a relatively stable number thereafter.
+
+
+
+
+```{r respondents-per-week, fig.height=2, fig.cap="Respondents per Week of the Course"}
+quiz_answers$date <- as.Date(quiz_answers$time_stamp)
+quiz_answers$week <- lubridate::week(quiz_answers$time_stamp)
+quiz_answers$week_of_course <- quiz_answers$week - min(quiz_answers$week) +1
+quiz_answers %>% 
+  group_by(week_of_course) %>% 
+  summarize(N=n_distinct(respondent_id)) %>% 
+  ggplot(aes(x=week_of_course,y=N))+
+  geom_line(color="red")+
+  geom_point(color="red")+
+  geom_smooth(lty=2, se=FALSE,color="gray")+
+  ylab("Respondents")+
+  xlab("Week of the Course")+
+  scale_x_continuous(breaks = c(1,5,9,13))
+```
+
+# Reponses to Star-Ratings
+
+The student were asked to provide star-ratings (1-5) to four questions. These were:
+
+1. *Claridad de la(s) lectura(s)* [Clarity of the readings]
+2. *Claridad de la presentación* [Clarity of the presentation]
+3. *Conocimentos previos* [Prior knowledge]
+4. *Calidad de la conectividad* [Connectivity]
+
+The star-ratings in these categories are shown in Figure \@ref(fig:star-ratings-per-week).
+
+```{r star-ratings-per-week, fig.cap="Average Star-Rating per Week"}
+quiz_answers %>% 
+  filter(question %in% c("Calidad de la conectividad", "Claridad de la(s) lectura(s)", "Claridad de la presentación", "Conocimentos previos" )) %>% 
+  group_by(week_of_course, question) %>% 
+  summarize(
+    "Mean Rating" = mean(as.numeric(answer),na.rm=TRUE),
+    "Median Rating" = median(as.numeric(answer),na.rm=TRUE)
+            ) %>% 
+  ggplot(aes(x=week_of_course, y=`Mean Rating`, color = question))+
+  geom_line(key_glyph = "timeseries")+
+  geom_point(key_glyph  = "timeseries")+
+  guides(color=guide_legend(nrow=2))+
+  theme(legend.position = "top", legend.title = element_blank())+
+  xlab("Week of the Course")+
+  scale_x_continuous(breaks = c(1,5,9,13))+
+  scale_y_continuous(limits = c(1,5))
+```
+
+## Real use of scale
+
+While the students have five options to choose from when giving a star rating, it is not necessarily clear whether they in fact use the whole scale. Figure \@ref(fig:star-ratings-overall) shows the distribution of stars for each of the four star-rated questions used in the questionnaire.
+
+```{r star-ratings-overall, fig.cap="Comparison of Star Ratings"}
+quiz_answers %>% 
+  filter(question %in% c("Calidad de la conectividad", "Claridad de la(s) lectura(s)", "Claridad de la presentación", "Conocimentos previos" )) %>% 
+  mutate(Stars = as.numeric(answer)) %>% 
+  group_by(question) %>% 
+  # summarize(
+  #   "Minimum" = min(as.numeric(answer),na.rm=TRUE),
+  #   "Maximum" = max(as.numeric(answer),na.rm=TRUE)
+  # ) %>% 
+  ggplot(aes(x=Stars))+
+  geom_histogram()+
+  theme(plot.caption = element_text(hjust = 0))+
+  scale_y_continuous(labels = NULL) +
+  ylab(NULL)+
+  facet_wrap(~question,ncol = 1)+
+  theme(
+  strip.text.x = element_text(hjust=0)
+  )
+```
+
+We see that the full scale of the star-ratings is only present in the answers to the question of prior knowledge. 
+
+
+# Linguistic Analysis
+
+The feedback from students also included two open-ended questions. These were:
+
+* *Conceptos que aprendiste* [Concepts learned]
+* *Conceptos que necesitás revisar* [Concepts for review]
+
+The interface provided to the students allows for input of any length, i.e. the indivual concepts could be multiple words, (see Figure \@ref(fig:studentapp)), separated by the <enter> key. Once enter was hit, the word or words were visually indicated to be of the same group. The interaction described is *standard* for this type of input on a mobile device.
+
+```{r}
+quiz_answers %>% 
+  filter(question_type == "KW") %>% 
+  select(question, answer, week_of_course)
+```
+
+
+# References
