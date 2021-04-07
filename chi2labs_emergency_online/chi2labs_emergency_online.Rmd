@@ -23,6 +23,7 @@ output:
 
 ```{r setup, include=FALSE}
 library(tidyverse)
+library(kableExtra)
 knitr::opts_chunk$set(echo=FALSE, message=FALSE)
 knitr::opts_chunk$set(fig.pos = "H", out.extra = "")
 
@@ -33,6 +34,9 @@ quiz_answers <- read_rds(here::here("data","quiz_answers.rds"))
 # filter out some participants
 participants <- participants %>% 
   filter(!last_name%in% c("Magadán", "Dietrichson","Pagnone"))
+
+quiz_answers <- quiz_answers %>% #Remove our spurious answers as well
+  filter(respondent_id %in% participants$user_id)
 
 theme_set(theme_minimal())
 update_geom_defaults("bar", list(fill="red"))
@@ -143,10 +147,10 @@ quiz_answers %>%
 
 The student were asked to provide star-ratings (1-5) to four questions. These were:
 
-1. *Claridad de la(s) lectura(s)* [Clarity of the readings]
-2. *Claridad de la presentación* [Clarity of the presentation]
-3. *Conocimentos previos* [Prior knowledge]
-4. *Calidad de la conectividad* [Connectivity]
+* *Claridad de la(s) lectura(s)* [Clarity of the readings]
+* *Claridad de la presentación* [Clarity of the presentation]
+* *Conocimentos previos* [Prior knowledge]
+* *Calidad de la conectividad* [Connectivity]
 
 The star-ratings in these categories are shown in Figure \@ref(fig:star-ratings-per-week).
 
@@ -204,11 +208,133 @@ The feedback from students also included two open-ended questions. These were:
 
 The interface provided to the students allows for input of any length, i.e. the indivual concepts could be multiple words, (see Figure \@ref(fig:studentapp)), separated by the <enter> key. Once enter was hit, the word or words were visually indicated to be of the same group. The interaction described is *standard* for this type of input on a mobile device.
 
-```{r}
+The purpose of this question and the selected interface was to elicit key-terms for each category as this would facilitate automatization of the linguistic analysis. In practice, however, some proportion of the did not enter the data as expected. It is not clear whether this was because the field format was deemed inappropriate for the purpose, the instructions were unclear or due to lack of familiarity with this type of interface. A software update was made to the instructor app (Figure \@ref(fig:instructorapp)) to enhance the interpretability of the feedback, however, the researchers chose not to make any changes to the student interface.
+
+Several different *feedback formats* were observed. While most students used the interface as intended (*Norm*), some chose not to answer the open-ended questions, some chose to submit a list, separated by commas and/or other connectors, and some chose a longer-form style of feedback. Table \@ref(tab:input-strategy-used) summarizes these.
+
+```{r deduplication}
+# Deduplication 
+# Turns out there was a bug in the code that led to duplicated answers for the linguistic input. This was fixed after week 2
 quiz_answers %>% 
   filter(question_type == "KW") %>% 
-  select(question, answer, week_of_course)
+  select(question, answer, week_of_course, request_id, 
+         respondent_id, question_id) %>% 
+ group_by(respondent_id, request_id, question_id, question, answer,week_of_course) %>% 
+  tally() %>% 
+  arrange(desc(desc(week_of_course),desc(n))) -> quiz_answers2
+
 ```
+
+```{r}
+quiz_answers2 <- quiz_answers2 %>%
+  select(answer,everything())
+
+quiz_answers2 <- quiz_answers2 %>% 
+  mutate(answer2 = ifelse(answer =="NULL", NA,answer) ) %>%  # No answer
+  mutate(response_type = 
+           case_when(
+             is.na(answer2) ~ "N/A",
+             startsWith(answer2,"c(") ~ "Norm",
+             stringr::str_detect(answer2, ",") > 0 ~ "Comma",
+             stringr::str_detect(answer2, " e ") > 0 ~ "Comma", #connector
+             stringr::str_detect(answer2, " y ") > 0 ~ "Comma", #connector
+             stringr::str_detect(answer2, " vs. ") > 0 ~ "Comma", #connector
+             stringr::str_detect(answer2, " - ") > 0 ~ "Comma", #connector
+             stringr::str_detect(answer2," ", negate = TRUE) ~ "Norm"
+             #, #Single word
+             ,stringr::str_count(answer2," ") == 1 ~ "Norm" #two words
+             ,stringr::str_count(answer2," ") == 2 ~ "Norm" #three words
+             ,TRUE ~ "Long form"
+           )
+  ) 
+
+# I tried doing this with the tidyverse case_when + lengt(eval(...etc. But it seems evaluation always happens first so
+tmp <- quiz_answers2 %>% 
+  select(respondent_id, request_id, question_id,answer2) %>% 
+  filter(startsWith(answer2,"c(")) %>% 
+  mutate(concept_count = length(eval(parse(text=answer2)))) %>% 
+  mutate(concepts =
+           stringr::str_flatten(eval(parse(text=answer2)),collapse="|" )
+  )
+
+quiz_answers2 <- quiz_answers2 %>% 
+  left_join(tmp)
+
+# Now parse the rest
+tmp2 <- quiz_answers2 %>% 
+  mutate(
+    concept_count = 
+      case_when(
+        !is.na(concept_count) ~ concept_count, #i.e. do nothing
+        response_type == "Comma" ~ length(stringr::str_split(answer2,"\\sy\\s|\\so\\s|,|vs\\.")),
+        response_type == "Norm" & is.na(concept_count) ~ 
+          length(stringr::str_split(answer2," "))
+        #  ,TRUE ~ length(stringr::str_split(answer2," "))
+      )
+  ) %>% 
+  mutate(
+    concepts = 
+      case_when(
+        !is.na(concept_count) ~ concepts, #i.e. do nothing
+        response_type == "Comma" ~ stringr::str_replace_all(answer2,"\\sy\\s|\\so\\s|,|vs\\.", " "),
+        response_type == "Norm" & is.na(concept_count) ~ answer2
+        #  ,TRUE ~ length(stringr::str_split(answer2," "))
+      )
+  )  
+
+quiz_answers2 <- tmp2
+rm(tmp);rm(tmp2);
+```
+
+```{r input-strategy-used, }
+  quiz_answers2 %>% 
+    group_by(response_type, question) %>% 
+    count %>% 
+    rename(Question=question) %>% 
+    pivot_wider(names_from = "response_type", values_from = "n") %>% 
+  select(Question,`N/A`, Norm, Comma, `Long form`) %>%
+    knitr::kable(caption = "Input Strategies Observed",
+                 booktabs = TRUE) %>%
+    add_header_above(c(" ", " ", "Format" = 3), bold = TRUE, italic = TRUE)
+```
+Except for the non-reply, which is a legitimate answer to any of the questions posed, the format of the feedback is significant to the type of processing that is needed to extract, summarize and analyze the linguistic data.
+```{r}
+quiz_answers2 %>% 
+  filter(!is.na(concept_count)) %>% 
+  group_by(week_of_course,question) %>% 
+  summarize(
+    concepts = sum(concept_count,na.rm = TRUE),
+    respondents = n_distinct(respondent_id)
+  ) %>% 
+  mutate(concepts_per_student = concepts/respondents) -> tmp
+
+mean_learned <- tmp %>% filter(question == "Conceptos que aprendiste") %>% pull(concepts_per_student) %>% mean %>% 
+  round(digits=1)
+concepts_requested <- tmp %>% filter(question != "Conceptos que aprendiste") %>% pull(concepts_per_student) 
+
+```
+
+
+## Number of Concepts Learned and Requested
+
+We parsed the data using the appropriate technique depending on the input strategy used by the students. We then counted the number of concepts in all non-empty inputs across the fourteen weeks of the course. Figure \@ref(fig:concepts-per-student) summarizes these results. We see that requests for review of concepts remained relatively stable throughout the course, with a mean of `r mean(concepts_requested) %>% round(digits=1)` and a standard deviation of `r sd(concepts_requested) %>% round(digits=1)`, while the number of concepts learned show a significant increase in weeks 9-11. It is also worth noting that at no point during the course do the students on average report learning fewer concepts than those needing review.
+
+
+```{r concepts-per-student, fig.cap="Concepts Input per Student Per Week of the Course"}
+
+
+tmp %>% 
+  ggplot(aes(x = week_of_course, y = concepts_per_student, color=question ))+
+  geom_line(key_glyph = "timeseries")+
+  geom_point(key_glyph  = "timeseries")+
+  theme(legend.position = "top", legend.title = element_blank())+
+  xlab("Week of the Course")+
+  ylab("Number of Concepts")+
+  scale_x_continuous(breaks = c(1,5,9,13))+
+  scale_y_continuous(limits = c(0,15))
+```
+
+
 
 
 # References
