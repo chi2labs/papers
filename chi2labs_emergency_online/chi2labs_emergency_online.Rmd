@@ -24,7 +24,7 @@ output:
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(kableExtra)
-knitr::opts_chunk$set(echo=FALSE, message=FALSE)
+knitr::opts_chunk$set(echo=FALSE, message=FALSE, warning = FALSE)
 knitr::opts_chunk$set(fig.pos = "H", out.extra = "")
 
 ## Data 
@@ -91,7 +91,7 @@ In the Republic of Argentina the COVID-19 pandemic was declared toward the end o
 
 In the given 
 
-Build with several R packages: [@shinyMobile:2020]
+Build with several R packages, the most important ones of which were: {shinyMobile}[@shinyMobile:2020] and {chi2Mobile}[@chi2Mobile:2020].
 
 
 In Figure \ref{fig:studentapp} we see the main interfaces.
@@ -221,7 +221,7 @@ quiz_answers %>%
          respondent_id, question_id) %>% 
  group_by(respondent_id, request_id, question_id, question, answer,week_of_course) %>% 
   tally() %>% 
-  arrange(desc(desc(week_of_course),desc(n))) -> quiz_answers2
+  arrange(desc(desc(week_of_course),desc(n)))  -> quiz_answers2
 
 ```
 
@@ -266,7 +266,7 @@ tmp2 <- quiz_answers2 %>%
     concept_count = 
       case_when(
         !is.na(concept_count) ~ concept_count, #i.e. do nothing
-        response_type == "Comma" ~ length(stringr::str_split(answer2,"\\sy\\s|\\so\\s|,|vs\\.")),
+        response_type == "Comma" ~ length(stringr::str_split(answer2,"\\sy\\s|\\so\\s|,|vs\\.|\\/")),
         response_type == "Norm" & is.na(concept_count) ~ 
           length(stringr::str_split(answer2," "))
         #  ,TRUE ~ length(stringr::str_split(answer2," "))
@@ -321,8 +321,6 @@ We parsed the data using the appropriate technique depending on the input strate
 
 
 ```{r concepts-per-student, fig.cap="Concepts Input per Student Per Week of the Course"}
-
-
 tmp %>% 
   ggplot(aes(x = week_of_course, y = concepts_per_student, color=question ))+
   geom_line(key_glyph = "timeseries")+
@@ -333,6 +331,104 @@ tmp %>%
   scale_x_continuous(breaks = c(1,5,9,13))+
   scale_y_continuous(limits = c(0,15))
 ```
+
+## N-gram Analysis
+
+N-gram analysis was performed [@tidytext:2016]
+
+```{r}
+library(tidytext)
+## Stop_words for unigrams
+stop_words_unigrams <- data.frame(
+  ngram = c(
+    "que",
+    "y",
+    "de",
+    "la",
+    "los",
+    "las",
+    "al",
+    "del",
+    "un",
+    "una",
+    "a",
+    "vs",
+    "me",
+    "sobre",
+    "es",
+    "no",
+    "o",
+    "e",
+    "en",
+    "se",
+    "entre",
+    "como",
+    "con",
+    "el", 
+    "ella")
+)
+
+# TODO: Something with accents - they are not consistently added.
+
+unigrams <-
+  quiz_answers2 %>%
+  ungroup %>% 
+  select(concepts, question, week_of_course) %>% 
+  unnest_tokens(ngram, concepts, token = "words" ) %>% 
+  anti_join(stop_words_unigrams) 
+
+```
+
+
+```{r}
+bigrams <-
+  quiz_answers2 %>%
+  ungroup %>% 
+  unnest_tokens(ngram, concepts, token = "ngrams", ngram_delim=" ", n = 2L) %>% 
+  select(ngram,question, week_of_course)
+```
+
+```{r}
+trigrams <-
+  quiz_answers2 %>%
+  ungroup %>% 
+  unnest_tokens(ngram, concepts, token = "ngrams", ngram_delim=" ", n = 3L) %>% 
+  select(ngram,question, week_of_course)
+
+```
+
+
+```{r unigram-table}
+unigrams %>%
+  group_by(week_of_course,ngram) %>%
+  tally %>%
+  filter(!is.na(ngram)) %>%
+  group_by(week_of_course) %>%
+  arrange(desc(n),.by_group = TRUE) %>%
+  filter(row_number()<=10) %>% 
+  arrange(ngram, .by_group = TRUE) -> tmp
+
+
+  # 7 column matrix
+  tmp2 <- matrix(nrow = 22, ncol = 7)
+  # Insert "headings"
+  tmp2[1,] <- paste0("Week ",1:7)
+  tmp2[2:11,] <- tmp$ngram[1:70]
+  tmp2[12,] <- paste0("Week ",8:14)
+  tmp2[13:22,] <- tmp$ngram[71:140]
+  
+  
+  tmp2 %>%
+    knitr::kable(booktabs=TRUE, align = 'l', 
+                 caption = "Top Unigrams per Week",
+                 linesep = c(rep("",10),"\\addlinespace")) %>% 
+    row_spec(c(1,12), bold=TRUE)
+```
+
+
+
+
+
 
 
 
