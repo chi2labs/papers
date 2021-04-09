@@ -26,6 +26,7 @@ library(tidyverse)
 library(kableExtra)
 knitr::opts_chunk$set(echo=FALSE, message=FALSE, warning = FALSE)
 knitr::opts_chunk$set(fig.pos = "H", out.extra = "")
+options(knitr.kable.NA = '')
 
 ## Data 
 participants <- read_rds(here::here("data","users.rds"))
@@ -334,7 +335,7 @@ tmp %>%
 
 ## N-gram Analysis
 
-N-gram analysis was performed [@tidytext:2016]
+N-gram analysis was performed [@tidytext:2016] on the feedback data. The results are summarized in 
 
 ```{r}
 library(tidytext)
@@ -364,7 +365,8 @@ stop_words_unigrams <- data.frame(
     "entre",
     "como",
     "con",
-    "el", 
+    "el",
+    "d",
     "ella")
 )
 
@@ -424,42 +426,39 @@ trigrams <-
 ```
 
 ```{r}
-x <- .extract_top_ngrams_by_week_of_course(unigrams)
-.create_ngram_matrix <- function(x, n_col = 7, header_prefix = "Week ") {
-   x %>% 
-     group_by(week_of_course) %>% 
-     tally %>% pull(n) %>% max -> n_rows_per_week
-  my_vec <- sapply(1:max(x$week_of_course), function(idx){
-    x %>% 
-      filter(week_of_course == idx) %>% 
-      pull(ngram) %>% 
-      as.character()-> tmp
-    # Ensure it has n_rows_per_week
-    c(paste0(header_prefix, idx), tmp)
-  },simplify = TRUE, USE.NAMES = FALSE) 
-  # # # Calculate number of rows:
-  x %>%
-    group_by(week_of_course) %>%
-    tally %>% pull(n) %>% max -> n_rows_per_week
-  n_row <- ceiling(max(x$week_of_course)/ n_col)*n_rows_per_week+
-    ceiling(max(x$week_of_course)/n_col)
-  ret <- matrix(nrow = n_row,ncol=n_col)
-  # # 
-  week_iter <- 1
-  for(i in seq(1,n_row, by = 11)){
-   ret[i:(n_rows_per_week+i),1:n_col] <-  
-     my_vec[1:(n_rows_per_week+1), week_iter:(week_iter+n_col-1) ]
-   week_iter <- week_iter + n_col
- }
-  ret
-} 
 
-.create_ngram_matrix(x) -> mytest
+.create_ngram_matrix <- function(x, n_col = 7, header_prefix = "Week ") {
+  # Create layout we want c(1,8,2,9,3,10 etc
+  max_weeks <- max(x$week_of_course)
+  n_headers <- ceiling(max_weeks/n_col)
+  rows_per_week <- x %>% group_by(week_of_course) %>% count %>% pull(n) %>% max
+  my_seq <-   matrix(ncol = n_col, data=1:max_weeks, byrow = TRUE) %>% as.vector()
+  my_matrix <- matrix(nrow=(rows_per_week*n_headers+n_headers), ncol=n_col)
+  #insert each week in place
+ 
+  for(i in 1:length(my_seq)){
+    my_week <- my_seq[i]
+    my_data <- x %>%
+      filter(week_of_course == my_week) %>% pull(ngram)
+    my_data <- c(paste0(header_prefix,my_week),my_data)
+    # Make sure it is right length 
+    length(my_data) <- rows_per_week+1 # fills up with na
+    
+    row_num_max <- ceiling(my_week/n_col)*rows_per_week+
+      ceiling(my_week/n_col) #header rows need space as well
+    my_rows <- (row_num_max-rows_per_week):row_num_max
+    my_col <- my_week%%n_col
+    if(my_col == 0 )my_col = 7
+    my_matrix[my_rows,my_col] <- my_data
+ 
+  }
+  my_matrix
+} 
 ```
 
 
  
- Table \@ref(tab:unigram-table-concepts-learned) and table \@ref(tab:unigram-table-review-requests) 
+table \@ref(tab:unigram-table-concepts-learned) and table \@ref(tab:unigram-table-review-requests), which we have included for completeness, while recognizing tha they may be difficult to interpret without knowledge of the course curriculum in question. It was generally found that the concepts and topics that students reported having learned were in line with the instructors expectations and that the review requests were particularly useful to the instructor in organizing course. The lack of any (relevant) review requests for weeks seven, nine and ten are also related to the organization of the course, as evaluations were due around this time. Finally we note that in week thirteen several of the students chose to use the *request for feedback* field in the app to write thank you notes to the instructor and teaching assistants. This is yet another example of how the user is king when it comes to interacting with computer systems: they will use however they please, and ways that make sense to them, irregardless of the intent of the designer of the system.
  
 ```{r unigram-table-concepts-learned}
   unigrams %>% 
@@ -470,12 +469,13 @@ x <- .extract_top_ngrams_by_week_of_course(unigrams)
                  caption = "Reported Concepts Learned per Week",
                  linesep = c(rep("",10),"\\addlinespace")) %>% 
     row_spec(c(1,12), bold=TRUE) %>% 
-    kable_styling(latex_options = c("striped", "scale_down"))
+    kable_styling(latex_options = c( "scale_down"))
 ```
 
 
 
 ```{r unigram-table-review-requests}
+
   unigrams %>% 
     filter(question != "Conceptos que aprendiste" ) %>% 
     .extract_top_ngrams_by_week_of_course() %>% 
@@ -483,7 +483,8 @@ x <- .extract_top_ngrams_by_week_of_course(unigrams)
     knitr::kable(booktabs=TRUE, align = 'l', 
                  caption = "Requests for Review",
                  linesep = c(rep("",10),"\\addlinespace")) %>% 
-    row_spec(c(1,12), bold=TRUE)
+    row_spec(c(1,12), bold=TRUE) %>% 
+    kable_styling(latex_options = c( "scale_down"))
 ```
 
 
