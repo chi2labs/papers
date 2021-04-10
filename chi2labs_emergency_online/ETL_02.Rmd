@@ -1,0 +1,354 @@
+---
+title: "ETL_02"
+author: "Aleksander Dietrichson, PhD"
+date: "10/3/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(dplyr)
+```
+
+## Purpose
+
+ETL for the paper. Processes csv to an RDS. The data represents grades and other information from "Gramática" for the years 2011-2020.
+
+
+# 2020
+```{r}
+my_data <- read_csv(here::here("data","raw","gramatica_listado_notas_2020.csv"))
+```
+
+# Peek
+
+```{r}
+my_data
+names(my_data)
+```
+
+
+```{r}
+my_data%>% 
+  select(nombre=Nombre, 
+         apellido = Apellido, 
+         e_mail = `e-mail`,
+         tp1 = `TP#1: clases palabras`,
+         tp2 = `TP#2: variación`,
+         tp3 = `TP#3: morfo y sintaxis`,
+         practicos = Prácticos,
+         promedio_cursada = `Promedio cursada`,
+         examen_final = `Examen final`,
+         grupo = Grupo) -> my_data
+```
+
+# Parse out numbers
+```{r}
+my_locale <- locale(decimal_mark = ",")
+
+.parse_numeric_columns <- function(x){
+  x %>% 
+    mutate(examen_final_numeric = parse_number(examen_final, locale = my_locale)) -> x
+  if("tp1" %in% names(x))
+    x <- x %>%  mutate(tp1_numeric = parse_number(tp1, locale = my_locale))  
+  if("tp2" %in% names(x))
+    x <- x %>%  mutate(tp2_numeric = parse_number(tp2, locale = my_locale))  
+  if("tp3" %in% names(x))
+    x <- x %>%  mutate(tp3_numeric = parse_number(tp3, locale = my_locale))  
+  if("practicos" %in% names(x))
+    x <- x %>%  mutate(practicos_numeric = parse_number(practicos, locale=my_locale))
+  if("promedio_cursada" %in% names(x))
+    x <- x %>%  mutate(promedio_cursada_numeric = parse_number(promedio_cursada, locale=my_locale)) 
+  # Conditional parsing
+  if("tp4" %in% names(x))
+    x <- x %>% mutate(tp4_numeric = parse_number(tp4, locale = my_locale))
+  if("primer_parcial" %in% names(x))
+    x <- x %>% mutate(primer_parcial_numeric = parse_number(primer_parcial, locale = my_locale))
+  if("segundo_parcial" %in% names(x))
+    x <- x %>% mutate(segundo_parcial_numeric = parse_number(segundo_parcial, locale = my_locale))
+  if("tp_domiciliario" %in% names(x))
+    x <- x %>% mutate(tp_domiciliario_numeric = parse_number(tp_domiciliario, locale = my_locale))
+  
+  x
+}
+
+
+```
+
+```{r}
+my_data %>% .parse_numeric_columns() -> my_data
+my_data$year <- 2020
+```
+
+# 2019 
+```{r}
+my_data2019 <- read_csv(here::here("data","raw","gramatica_listado_notas_2019.csv"))
+names(my_data2019)
+```
+## Select 
+```{r}
+my_data2019 %>%  select(nombre=Nombre, 
+         apellido = Apellido, 
+         e_mail = `e-mail`,
+         tp1 = `TP 1: morfología`,
+         tp2 = `TP: clases de palabras`,
+         tp3 = `TP 3: Variación`,
+         tp4 = `TP 4: Sintaxis`,
+         practicos = Prácticos,
+         promedio_cursada = `Promedio cursada`,
+         examen_final = `Examen final`) %>% 
+  mutate(year = 2019) %>% 
+  .parse_numeric_columns() -> my_data2019
+
+# Remove "oyentes"
+my_data2019[1:44,] -> my_data2019
+```
+## Consistency check
+
+```{r}
+length(names(my_data))
+length(names(my_data2019))
+
+sum(!names(my_data2019)%in%names(my_data))
+sum(!names(my_data)%in%names(my_data2019))
+names(my_data2019)[!names(my_data2019)%in%names(my_data)]
+```
+
+# 2018
+```{r}
+my_data2018 <- read_csv(here::here("data","raw","gramatica_listado_notas_2018.csv"))
+names(my_data2018)
+my_data2018 %>% 
+select(nombre=Nombre, 
+         apellido = Apellido, 
+         e_mail = `e-mail`,
+         tp1 = `TP: Unidad 1`,
+         tp2 = `TP 2: clases de palabras`,
+         tp3 = `TP3: Variación`,
+        # tp4 = `TP 4: Sintaxis`,
+         practicos = Prácticos,
+         promedio_cursada = `Promedio cursada`,
+         examen_final = `Examen final`,
+       grupo = Grupo) %>% 
+  mutate(year = 2018) %>% 
+  .parse_numeric_columns() -> my_data2018
+# Remove oyentes 
+my_data2018[1:36,] -> my_data2018
+```
+
+# 2017
+```{r}
+my_data2017 <- read_csv(here::here("data","raw","gramatica_listado_notas_2017.csv"))
+names(my_data2017)
+my_data2017 %>% 
+  select(nombre=Nombre, 
+         apellido = Apellido, 
+         e_mail = `e-mail`,
+         primer_parcial = `Primer parcial`,
+         segundo_parcial = `Segundo parcial`,
+         tp_domiciliario = `TP domiciliario`,
+         practicos = Prácticos,
+         promedio_cursada = `Promedio cursada`,
+         examen_final = `Examen final`) %>% 
+  mutate(year = 2017) %>% .parse_numeric_columns()  -> my_data2017
+
+my_data2017[1:36,] ->my_data2017
+```
+
+# 2016
+```{r}
+my_data2016 <- read_csv(here::here("data","raw","gramatica_listado_notas_2016.csv"))
+names(my_data2016)
+my_data2016 %>% 
+  select(nombre=Nombre, 
+         apellido = Apellido, 
+         e_mail = `e-mail`,
+         primer_parcial = `Primer parcial`,
+         segundo_parcial = `Segundo parcial`,
+         tp_domiciliario = `TP domiciliario`,
+         promedio_cursada = `Promedio cursada`,
+         examen_final = `Examen final`) %>% 
+  mutate(year = 2016) %>% .parse_numeric_columns() -> my_data2016
+
+# Remove empty data & oyentes
+my_data2016[1:44,] -> my_data2016
+
+```
+
+# 2015
+
+```{r}
+my_data2015 <- read_csv(here::here("data","raw","gramatica_listado_notas_2015.csv"))
+names(my_data2015)
+my_data2015 %>% 
+  select(nombre=Nombre, 
+         apellido = Apellido, 
+         e_mail = `e-mail`,
+         primer_parcial = `Primer parcial`,
+         segundo_parcial = `Segundo parcial`,
+       
+         promedio_cursada = `Promedio cursada`,
+         examen_final = `Examen final`) %>% 
+  mutate(year = 2015) %>% .parse_numeric_columns() -> my_data2015
+my_data2015[1:39,] -> my_data2015
+```
+
+# 2014
+
+```{r}
+my_data2014 <- read_csv(here::here("data","raw","gramatica_listado_notas_2014.csv"))
+names(my_data2014)
+my_data2014 %>% 
+  select(nombre=Nombre, 
+         apellido = Apellido, 
+         e_mail = `e-mail`,
+         primer_parcial = `Primer parcial`,
+         segundo_parcial = `Segundo parcial`,
+        # tp_domiciliario = `TP domiciliario`,
+         promedio_cursada = `Promedio cursada`,
+         examen_final = `Examen final`) %>% 
+  mutate(year = 2014) %>% .parse_numeric_columns() -> my_data2014
+# Nothing to remove here
+
+```
+
+# 2013
+
+```{r}
+my_data2013 <- read_csv(here::here("data","raw","gramatica_listado_notas_2013.csv"))
+names(my_data2013)
+my_data2013 %>% 
+  select(nombre=Nombre, 
+         apellido = Apellido, 
+         e_mail = `e-mail`,
+         primer_parcial = `Primer parcial`,
+         segundo_parcial = `Segundo parcial`,
+        # tp_domiciliario = `TP domiciliario`,
+         promedio_cursada = `Promedio cursada`,
+         examen_final = `Examen final`) %>% 
+  mutate(year = 2013) %>% .parse_numeric_columns() -> my_data2013
+#my_data2013 #no empty rows to remove
+```
+
+
+# 2012
+
+
+```{r}
+my_data2012 <- read_csv(here::here("data","raw","gramatica_listado_notas_2012.csv"))
+names(my_data2012)
+my_data2012 %>% 
+  select(nombre=Nombre, 
+         apellido = Apellido, 
+         #e_mail = `e-mail`,
+         primer_parcial = `Primer parcial`,
+         segundo_parcial = `Segundo parcial`,
+        # tp_domiciliario = `TP domiciliario`,
+         promedio_cursada = `Promedio cursada`,
+         examen_final = `Examen final`) %>% 
+  mutate(year = 2012) %>% .parse_numeric_columns() -> my_data2012
+my_data2012
+```
+
+```{r}
+my_data2011 <- read_csv(here::here("data","raw","gramatica_listado_notas_2011.csv"))
+names(my_data2011)
+my_data2011 %>% 
+  select(nombre=Nombre, 
+         apellido = Apellido, 
+         #e_mail = `e-mail`,
+         primer_parcial = `Primer parcial`,
+         segundo_parcial = `Segundo parcial`,
+        # tp_domiciliario = `TP domiciliario`,
+         promedio_cursada = `Promedio cursada`,
+         examen_final = `Examen final`) %>% 
+  mutate(year = 2011) %>% .parse_numeric_columns() -> my_data2011
+#my_data2011
+```
+
+# Putting it all together
+```{r}
+my_data %>% 
+  union_all(my_data2011) %>% 
+  union_all(my_data2012) %>% 
+  union_all(my_data2013) %>% 
+  union_all(my_data2014) %>% 
+  union_all(my_data2015) %>% 
+  union_all(my_data2016) %>% 
+  union_all(my_data2017) %>% 
+  union_all(my_data2018) %>% 
+  union_all(my_data2019) -> my_data_all
+
+#post hoc discoveries
+my_data_all %>% 
+  filter(nombre!="Nombre") -> my_data_all
+```
+
+## Checks
+```{r}
+my_data_all %>% 
+  count(year)
+```
+
+Peek at grades
+```{r}
+library(ggplot2)
+my_data_all %>% 
+  mutate(year = as.Date(as.character(.data$year), format = "%Y")) %>% 
+  group_by(year) %>%
+  summarize(
+    mean_grade = mean(promedio_cursada_numeric, na.rm=TRUE)
+  ) %>% 
+  ggplot(aes(x=year, y=mean_grade))+
+  geom_line(key_glyph = "timeseries", color = "red")+
+  geom_point(key_glyph = "timeseries", color = "red", size=4)+
+  geom_point(key_glyph = "timeseries", color = "white", size=3)+
+  geom_smooth()
+```
+
+
+```{r}
+my_data_all %>% 
+  mutate(year = as.Date(as.character(.data$year), format = "%Y")) %>% 
+  group_by(year) %>%
+  summarize(
+    median = median(promedio_cursada_numeric, na.rm=TRUE)
+  ) %>% 
+  ggplot(aes(x=year, y=median))+
+  geom_line(key_glyph = "timeseries", color = "red")+
+  geom_point(key_glyph = "timeseries", color = "red", size=4)+
+  geom_point(key_glyph = "timeseries", color = "white", size=3)+
+  geom_smooth()
+```
+
+```{r}
+names(my_data_all)
+```
+
+# Save resulting data set
+
+```{r}
+write_rds(my_data_all, file = here::here("data","grades_gramatica_2011_2020.rds"))
+```
+
+```{r}
+my_data_all %>% 
+  group_by(year) %>% 
+  summarize(
+    drop_out_rate = sum(is.na(promedio_cursada_numeric)&is.na(examen_final_numeric))/n(),
+    N = n()
+  ) -> tmp
+```
+
+```{r}
+tmp %>% 
+  ggplot(aes(x=year,y=drop_out_rate))+
+  geom_line(key_glyph = 'timeseries')+
+  geom_smooth(se=F, method = "lm")
+```
+
+```{r}
+
+```
+

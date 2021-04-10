@@ -487,8 +487,11 @@ table \@ref(tab:unigram-table-concepts-learned) and table \@ref(tab:unigram-tabl
     kable_styling(latex_options = c( "scale_down"))
 ```
 
+## Staying on Topic
 
+### Distance Matrix
 
+### Node Centrality
 
 
 
