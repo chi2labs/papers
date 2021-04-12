@@ -24,8 +24,9 @@ output:
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(kableExtra)
+library(magrittr)
 knitr::opts_chunk$set(echo=FALSE, message=FALSE, warning = FALSE)
-knitr::opts_chunk$set(fig.pos = "H", out.extra = "")
+#knitr::opts_chunk$set(fig.pos = "H", out.extra = "")
 options(knitr.kable.NA = '')
 
 ## Data 
@@ -487,12 +488,139 @@ table \@ref(tab:unigram-table-concepts-learned) and table \@ref(tab:unigram-tabl
     kable_styling(latex_options = c( "scale_down"))
 ```
 
-## Staying on Topic
+## Statistical Modeling
 
-### Distance Matrix
-
-### Node Centrality
+As pointed out by e.g. @dietrichson_2020blog distribution of grades do typically not conform to statistical normality. In the case of the data at our disposal, the grades are ostensibly given on a scale from on to ten, with four being the lowest passing grade. In practice the lower end of the scale is not used and a two (2) is often granted as a universal *Fail*. For our statistical modeling we assumed that the variable *course grade* would be measured on an ordinal scale.
 
 
+```{r, include = FALSE}
+outcome_data <- read_rds(here::here("data","grades_gramatica_2011_2020.rds"))
+grades_2020 <- outcome_data %>% 
+  filter(year == 2020)
+grades_2020 <- grades_2020 %>% 
+  mutate(passfail = ifelse(promedio_cursada_numeric>=4,1,0)) %>% 
+  mutate(passfail = ifelse(examen_final_numeric>=4 & !is.na(examen_final_numeric), 1, passfail)) %>% 
+  mutate(passfail = ifelse(is.na(passfail),0,passfail))
+
+
+#join the data
+my_data <- grades_2020 %>% 
+  left_join(participants, by = c(e_mail = "email"))
+# Let's start with a logistic regression model
+quiz_answers2 %>% 
+  group_by(question, respondent_id) %>% 
+  summarize(
+    concept_count = sum(concept_count,na.rm=TRUE)
+  ) %>% 
+  pivot_wider(names_from = question, values_from = concept_count) %>% 
+  rename(learning_reported = 2, review_requests = 3) %>% 
+  right_join(my_data, by = c(respondent_id = "user_id"))  %>% 
+  select(respondent_id,learning_reported, review_requests,passfail,promedio_cursada_numeric, examen_final_numeric) %>% 
+  replace_na(list(learning_reported = 0,review_requests = 0)) %>% 
+  mutate(
+    promedio_cursada_numeric = if_else(promedio_cursada_numeric>=4,promedio_cursada_numeric,0) ) %>% 
+  
+  mutate(course_grade = promedio_cursada_numeric) %>%
+  rowwise() %>% 
+  mutate(course_grade = max(examen_final_numeric,promedio_cursada_numeric, na.rm = TRUE)) %>% 
+  mutate(course_grade = ifelse(course_grade>=4,course_grade,0)) -> my_data
+```
+
+### Kendall's Tau
+
+We computed the raw number of *concepts learned* and *review requests*. To explore the relationship between this measure and course grade we calculated the Kendall rank correlation coefficient (Kendall's $\tau$) between these variables and *course grade*. The results are shown in Table \@ref(tab:kendall-tau).
+
+```{r kendall-tau}
+# 
+# my_data %$% 
+#   cor.test(course_grade,learning_reported,method="ken") %>% 
+#   broom::tidy() %>% 
+#   mutate(Variable = "Learning Reported") %>% 
+#   select(Variable ,Tau=estimate, "z-score"=statistic, "p-value"=p.value) %>% 
+#   union(
+#     my_data %$% 
+#       cor.test(course_grade,review_requests,method="ken") %>% 
+#       broom::tidy() %>% 
+#       mutate(Variable = "Review Requests") %>% 
+#       select(Variable ,Tau=estimate, "z-score"=statistic, "p-value"=p.value)
+#   ) %>% 
+#   knitr::kable(caption="Kendalls $\\tau$", booktabs=TRUE, digits = 4) %>% 
+#   kable_styling() %>% 
+#   add_header_above(c(" "=1,"Test statistics"=3))
+```
+While the correlation coefficients cannot be interpreted as a percentage (as in the case with Pearson product-moment correlations), $\tau$-values above .3 are generally considered a strong correlation. The z-score and corresponding p-values show that there is a statistically significant relationship between the two variables in question, i.e. each of *learning reported* and *review requests* on the one hand and *course grade* on the other. 
+### Ordinal Regression
+
+While there is an overall strong and significant correlation between the variables in question and the outcome variable, we wanted explore these relationships in more detail. We therefore fitted an ordinal regression model [@MASS2021] with the raw number of concepts learned and review requests as independent variables. This approach allows us to estimate an effect size for the coefficient as well as the different intercepts. We are also able to deal with potential interaction effects between the independent variables. The results of the regression analysis are reported in Table \@ref(tab:ordinal-regression).
+
+```{r, include = FALSE}
+model_2data <- my_data
+# Find the levels in outcome variable
+model_2data$course_grade %>% unique %>% sort -> my_levels
+
+# model_2data <- model_2data %>%
+#   filter(!is.na(respondent_id)) 
+model_2data$course_grade <- factor(
+  model_2data$course_grade
+  ,
+  levels = my_levels,
+  labels = c("Fail", my_levels[2:length(my_levels)])
+  ,ordered = TRUE
+)
+
+library(MASS)
+ model_2 <-  polr(course_grade ~ (review_requests + learning_reported)^2,
+                  data=model_2data)
+  summary(model_2)
+detach("package:MASS", unload = TRUE)
+### P-values
+#ctable <- coef(summary(model_2))
+#p <- dt(abs(ctable[, "t value"]),df=nrow(model_2data)-1)
+
+```
+
+```{r ordinal-regression}
+broom::tidy(model_2) %>% 
+  rename(Term=term, Estimate = estimate, "Std Error"=std.error, "T-value" = statistic ) %>% 
+  mutate(Term = replace(Term,Term=="review_requests","Review Requests")) %>% 
+  mutate(Term = replace(Term,Term=="learning_reported","Learning Reported")) %>% 
+  mutate(Term = replace(Term,Term=="review_requests:learning_reported","Interaction")) %>% 
+  select(-coef.type) %>% 
+  knitr::kable(caption = "Summary for Ordinal Regression Model", 
+               booktabs = TRUE,
+               digits=3) %>% 
+  kable_styling() %>% 
+  pack_rows("Coefficients",1,3) %>% 
+  pack_rows("Intercepts",4,10)
+```
+
+We see that there is a negligible interaction effect, furthermore it is worth noting that the effect size for *review requests* is significantly higher than that for *concepts learned*. As for the intercept estimates, we see that they increase as the intercept thresholds increase. This might indicate that a working feedback loop, like the one our app aspires to provide, benefit the stronger students more than the weaker ones. 
+
+it is clear that the 
+Statistical significance was found for both *concepts learned* and *review requests*, but it is worth noticing that the effect size for review requests is almost twice that of reported learning. It is also worth noting that the coefficients are significantly lower for the weaker students than the stronger ones. This results seems to indicate that having a working feedback loop is more beneficial to mid to stronger students than the weaker ones. 
+
+
+```{r, include = FALSE}
+cor.test(model_2data$review_requests, 
+         as.numeric(model_2data$course_grade), method = "kendall") %>% 
+  broom::tidy()
+
+cor.test(model_2data$learning_reported,as.numeric(model_2data$course_grade), method = "kendall")
+```
+
+
+```{r concept-count-vs-final-grade, fig.cap="Concepts Learned/Review Requests by Course Grade"}
+my_data %>% 
+  pivot_longer(c(review_requests, learning_reported)) %>% 
+  ggplot(aes(y=course_grade, x=value, color=name))+
+  geom_point(alpha=.3)+
+  geom_smooth(method = "lm",lty=2, se=FALSE)+
+  scale_y_continuous(breaks = 0:10, labels = 0:10,limits = c(0,10))+
+  ylab("Course Grade")+
+  xlab("Concept Count")
+```
+### Limitations
+
+It is important to keep in mind that while the results reported are congruent with our hypothesis that a working feedback loop is beneficial to both students and instructors. 
 
 # References
