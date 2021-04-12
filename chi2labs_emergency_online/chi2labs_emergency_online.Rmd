@@ -528,27 +528,32 @@ quiz_answers2 %>%
 
 ### Kendall's Tau
 
-We computed the raw number of *concepts learned* and *review requests*. To explore the relationship between this measure and course grade we calculated the Kendall rank correlation coefficient (Kendall's $\tau$) between these variables and *course grade*. The results are shown in Table \@ref(tab:kendall-tau).
+We computed the raw number of *concepts learned* and *review requests*. To explore the relationship between this measure and course grade we calculated the Kendall rank correlation coefficient (Kendall's $\tau$) between these variables and *course grade*. The results are shown in Table \@ref(tab:kendall-tau). 
+
 
 ```{r kendall-tau}
-# 
-# my_data %$% 
-#   cor.test(course_grade,learning_reported,method="ken") %>% 
-#   broom::tidy() %>% 
-#   mutate(Variable = "Learning Reported") %>% 
-#   select(Variable ,Tau=estimate, "z-score"=statistic, "p-value"=p.value) %>% 
-#   union(
-#     my_data %$% 
-#       cor.test(course_grade,review_requests,method="ken") %>% 
-#       broom::tidy() %>% 
-#       mutate(Variable = "Review Requests") %>% 
-#       select(Variable ,Tau=estimate, "z-score"=statistic, "p-value"=p.value)
-#   ) %>% 
-#   knitr::kable(caption="Kendalls $\\tau$", booktabs=TRUE, digits = 4) %>% 
-#   kable_styling() %>% 
-#   add_header_above(c(" "=1,"Test statistics"=3))
-```
-While the correlation coefficients cannot be interpreted as a percentage (as in the case with Pearson product-moment correlations), $\tau$-values above .3 are generally considered a strong correlation. The z-score and corresponding p-values show that there is a statistically significant relationship between the two variables in question, i.e. each of *learning reported* and *review requests* on the one hand and *course grade* on the other. 
+
+my_data %$%
+  cor.test(course_grade,learning_reported,method="ken") %>%
+  broom::tidy() %>%
+  mutate(Variable = "Learning Reported") %>%
+  select(Variable ,Tau=estimate, "z-score"=statistic, "p-value"=p.value) %>%
+  union(
+    my_data %$%
+      cor.test(course_grade,review_requests,method="ken") %>%
+      broom::tidy() %>%
+      mutate(Variable = "Review Requests") %>%
+      select(Variable ,Tau=estimate, "z-score"=statistic, "p-value"=p.value)
+  ) %>%
+  knitr::kable(caption="Kendalls $\\tau$", booktabs=TRUE, digits = 4) %>%
+  kable_styling() %>%
+  add_header_above(c(" "=1,"Test statistics"=3))
+``` 
+
+While the correlation coefficients cannot be interpreted as a percentage (as in the case with Pearson product-moment correlations), $\tau$-values above .3 are generally considered a strong correlation. The z-score and corresponding p-values show that there is a statistically significant relationship between the two variables in question, i.e. each of *learning reported* and *review requests* on the one hand and *course grade* on the other.
+
+
+
 ### Ordinal Regression
 
 While there is an overall strong and significant correlation between the variables in question and the outcome variable, we wanted explore these relationships in more detail. We therefore fitted an ordinal regression model [@MASS2021] with the raw number of concepts learned and review requests as independent variables. This approach allows us to estimate an effect size for the coefficient as well as the different intercepts. We are also able to deal with potential interaction effects between the independent variables. The results of the regression analysis are reported in Table \@ref(tab:ordinal-regression).
@@ -619,6 +624,7 @@ my_data %>%
   ylab("Course Grade")+
   xlab("Concept Count")
 ```
+
 ### Limitations
 
 It is important to keep in mind that while the results reported are congruent with our hypothesis that a working feedback loop is beneficial to both students and instructors. 
