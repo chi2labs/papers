@@ -13,11 +13,11 @@ keywords:
   - Learning Loss
   - Covid Pandemic
 bibliography: references.bib
-biblio-style: apa
+biblio-style: unsrt
 output: 
   bookdown::pdf_document2:
     toc: false
-    keep_tex: true
+    keep_tex: false
     extra_dependencies: ["float"]
 ---
 
@@ -69,13 +69,7 @@ dietrichson@gmail.com   &  & &Buenos Aires, Argentina\\
 ```{=tex}
 \begin{abstract}
 
-At the onset of the COVID pandemic, thousands of courses were emergency onlined.
-
-As a response to these new and unfamiliar conditions a mobile app was developed and deployed to
-
-mitigate some of the learning loss produced. This paper presents experiences and related findings
-
-from this deployment.
+At the onset of the COVID pandemic, thousands of courses were emergency onlined. As a response to these new and unfamiliar conditions a mobile app was developed and deployed to assist instructors in obtaining feedback from students on the evolytion of the course. This paper presents experiences and related findings from this deployment.
 
 \end{abstract}
 ```
@@ -83,16 +77,16 @@ from this deployment.
 ---
 
 # Introduction 
-In Argentina the COVID-19 pandemic was declared toward the end of February of 2020. Our geographic location in the southern hemisphere meant that it his toward the end of summer, with most schools coming off a two month summer break. The emergency measures put in place by public health authorities meant that thousands of courses which would normallly be taught in a face-to-face setting would now have to be onlined. While most institutions have access to learning management systems, these sytems were unfamiliar to most instructors and widely deemed unsuited for the purpose, and most instructors opted for a synchronous format using some kind of videoconferencing system such as Meet, Teams or Big Blue Button. Legal and administrative requirements stating that a course session needed to have a start and end time also tilted the weight in favor of these options. 
+In Argentina the COVID-19 pandemic was declared toward the end of February of 2020. In the southern hemisphere this toward the end of summer, with most schools coming off a two month summer break. The emergency measures put in place by public health authorities meant that thousands of courses which would normally be taught in a face-to-face setting would now have to be moved online. While most educational institutions in Argentina have access to learning management systems, these systems were unfamiliar to most instructors and widely deemed unsuited for the purpose. Most instructors opted for a synchronous format using some kind of videoconferencing system such as *Meet*, *Teams* or *Big Blue Button*. Legal and administrative requirements stating that a course session needed to have a start and end time as well as dates also tilted the weight in favor of synchronous options. 
 
 # The Chi Square Mobile App 
 
-The *Chi Square Mobile App* was orignally developed ot augment the feedback loop in a traditional classrooms settings. Given the emerging context we decided to make the necessary changes to repurpose the development for use in the situation we found ourselves in. The app was built with several R packages, the most important ones of which were: *shinyMobile*[@shinyMobile:2020] and *chi2Mobile*[@chi2Mobile:2020]; and *Android Studio*[@androidstudio:2020], and the necessary updates adjustments were made before it was made available in the Google play store. The system has two main interfaces, one for students and one for instructors.
+The *Chi Square Mobile App* was originally developed to augment the feedback loop in traditional classrooms settings. Given the emerging context we decided to make the necessary changes to repurpose the development for use in the situation we found ourselves in. The app was built with several R packages, the most important ones of which were: *shinyMobile* [@shinyMobile:2020] and *chi2Mobile* [@chi2Mobile:2020] as well as *Android Studio*[@androidstudio:2020]. The necessary updates and adjustments were made before it was released in the Google play store. The system has two main interfaces, one for students and one for instructors.
 
 ## Student App
-The student app prompts the student when a request for feedback has been made, typically immediately following the online session. The template used for this field test included star-ratings on four questions, and two open-ended question where the students could enter concepts learned and request reviews of concepts that were not clearly understood. The app also allows for access to a student facing analytics dashboard, and a calendar interface. 
+The student app prompts the student when a request for feedback is available --typically immediately following the online live session. A similar prompt is received when the deadline for completing the feedback approached. By default the deadline was five days after the request was made, and an email reminder was also sent out simultaneously with the in-app prompts. 
 
-In Figure \ref{fig:studentapp} we see the main interfaces for the student.
+The template used for this field test included star-ratings on four questions, and two open-ended question where the students could enter concepts learned and request reviews of concepts that were not clearly understood. The app also allows for access to a student facing analytics dashboard, and a calendar interface. Figure \ref{fig:studentapp} shows the main application interfaces for the student.
 
 \begin{figure}[H]
 \centering
@@ -105,11 +99,7 @@ In Figure \ref{fig:studentapp} we see the main interfaces for the student.
 
 ## Instructor App
 
-The instructor app provides functionality for the instructor to request feedback (or automate process this with an scheduler) using one of the templates available, or by creating a custom questionaire. The instructor has access to summary statistics for the feedback given, including linguistic analyses for the open-ended question types. There is also a recommendation engine which will propose topics for review and make content recommendations. The instructor app also provides analytics on the progress of students, and ties in to an early warning systems to detect students at high risk of failure. 
-
-Figure \@ref(fig:instructorapp) Shows some of the interfaces available for the instructor.
-
-
+The instructor app provides functionality for the instructor to request feedback (or automate process this with an scheduler) using one of the templates available, or by creating a custom questionnaire. The instructor has access to summary statistics for the feedback given, including linguistic analyses for the open-ended question types. There is also a recommendation engine which will propose topics for review and make content recommendations. The instructor app also provides analytics on the progress of students, and ties in to an early warning systems to detect students at high risk of failure. Figure \@ref(fig:instructorapp) shows some of the interfaces available for the instructor.
 
 \begin{figure}[H]
 \centering
@@ -124,9 +114,6 @@ Figure \@ref(fig:instructorapp) Shows some of the interfaces available for the i
 # Context and Participants
 
 A cohort of `r nrow(participants)` students, enrolled in *Gramatica*, an introductory level linguistic course taught by one of the authors, were asked to download and install the application on their devices. A total of `r quiz_answers$respondent_id %>% unique %>% length` complied with these instructions and responded at least once. The course had a duration of sixteen weeks, with additional final exam options at the end of the semester. Figure \ref{fig:respondents-per-week} shows the number of students who responded to the request for feedback during the semester. We see a sharp drop-off in week six, and a relatively stable number thereafter.
-
-
-
 
 ```{r respondents-per-week, fig.height=2, fig.cap="Respondents per Week of the Course"}
 quiz_answers$date <- as.Date(quiz_answers$time_stamp)
@@ -191,7 +178,7 @@ quiz_answers %>%
   theme(plot.caption = element_text(hjust = 0))+
   scale_y_continuous(labels = NULL) +
   ylab(NULL)+
-  facet_wrap(~question,ncol = 1)+
+  facet_wrap(~question,ncol = 2)+
   theme(
   strip.text.x = element_text(hjust=0)
   )
@@ -207,7 +194,7 @@ The feedback from students also included two open-ended questions. These were:
 * *Conceptos que aprendiste* [Concepts learned]
 * *Conceptos que necesitás revisar* [Concepts for review]
 
-The interface provided to the students allows for input of any length, i.e. the indivual concepts could be multiple words, (see Figure \@ref(fig:studentapp)), separated by the <enter> key. Once enter was hit, the word or words were visually indicated to be of the same group. The interaction described is *standard* for this type of input on a mobile device.
+The interface provided to the students allows for input of any length, i.e. the individual concepts could be multiple words, (see Figure \@ref(fig:studentapp)), separated by the <enter> key. Once enter was hit, the word or words were visually indicated to be of the same group. The interaction described is *standard* for this type of input on a mobile device.
 
 The purpose of this question and the selected interface was to elicit key-terms for each category as this would facilitate automatization of the linguistic analysis. In practice, however, some proportion of the did not enter the data as expected. It is not clear whether this was because the field format was deemed inappropriate for the purpose, the instructions were unclear or due to lack of familiarity with this type of interface. A software update was made to the instructor app (Figure \@ref(fig:instructorapp)) to enhance the interpretability of the feedback, however, the researchers chose not to make any changes to the student interface.
 
@@ -489,10 +476,6 @@ We have included these summaries for illustrative purposes, while recognizing th
 
 It was generally found that the concepts and topics that students reported having learned were in line with the instructor's expectations and that the review requests were particularly useful to the instructor in organizing course. The lack of any (relevant) review requests for weeks seven, nine and ten are also related to the organization of the course, as evaluations were due around this time. Finally we note that in week thirteen several of the students chose to use the *request for feedback* field in the app to write thank you notes to the instructor and teaching assistants. This is yet another example of how the user is king when it comes to interacting with computer systems: they will use however they please, and ways that make sense to them, irregardless of the intent of the designer of the system.
 
-# Statistical Modeling
-
-As pointed out by e.g. @dietrichson_2020blog distribution of grades do typically not conform to statistical normality. In the case of the data at our disposal, the grades are ostensibly given on a scale from zero to ten, with four being the lowest passing grade. In practice the lower end of the scale is not used and a two (2) is often granted as a universal *Fail*, and zero (0) suggests withdrawal from the course on the part of the student. For our statistical modeling we assumed that the variable *course grade* would be measured on an ordinal scale, with the range (0,4] encoded as *Fail*. 
-
 
 ```{r, include = FALSE}
 outcome_data <- read_rds(here::here("data","grades_gramatica_2011_2020.rds"))
@@ -527,6 +510,16 @@ quiz_answers2 %>%
   mutate(course_grade = ifelse(course_grade>=4,course_grade,0)) -> my_data
 ```
 
+# Statistical Modeling
+
+```{r shapiro}
+my_data$course_grade %>% 
+  shapiro.test() ->shapiro_test
+```
+As pointed out by e.g. @dietrichson_2020blog distribution of grades do typically not conform to statistical normality. In the case of the data at our disposal, the grades are ostensibly given on a scale from zero to ten, with four being the lowest passing grade. In practice the lower end of the scale is not used and a two (2) is often granted as a universal *Fail*, and zero (0) suggests withdrawal from the course on the part of the student. The Shapiro Wilk normality test was performed on the course grades and confirmed that course grades were indeed not normally distributed (*W* = `r shapiro_test$statistic %>% signif(4)%>% stringr::str_remove("0")`, *p* = `r shapiro_test$p.value %>% signif(3) %>% format(scientific = FALSE) %>% stringr::str_remove("0")`).
+
+For our statistical modeling we therefore assumed that the variable *course grade* would be measured on an ordinal scale, with the range (0,4] encoded as *Fail*. 
+
 ## Kendall's Tau
 
 We computed the raw number of *concepts learned* and *review requests*. To explore the relationship between this measure and course grade we calculated the Kendall rank correlation coefficient (Kendall's $\tau$) between these variables and *course grade*. The results are shown in Table \@ref(tab:kendall-tau). 
@@ -558,7 +551,7 @@ While the correlation coefficients cannot be interpreted as a percentage (as in 
 
 ## Ordinal Regression
 
-While there is an overall strong and significant correlation between the variables in question and the outcome variable, we wanted explore these relationships in more detail. We therefore fitted an ordinal regression model [@MASS2021; @williams:2020] with the raw number of concepts learned and review requests as independent variables. This approach allows us to estimate an effect size for the coefficient as well as the different intercepts. We are also able to deal with potential interaction effects between the independent variables. The results of the regression analysis are reported in Table \@ref(tab:ordinal-regression).
+While there is an overall strong and significant correlation between the variables in question and the outcome variable, we wanted explore these relationships in more detail. We therefore fitted an ordinal regression model [@MASS2021; @williams:2020] with the raw number of concepts learned and review requests as independent variables. This approach allowed us to estimate an effect size for the coefficient as well as the different intercepts. We are also able to deal with potential interaction effects between the independent variables. The results of the regression analysis are reported in Table \@ref(tab:ordinal-regression), with effect sizes reported as log-odds.
 
 ```{r, include = FALSE}
 model_2data <- my_data
@@ -601,11 +594,7 @@ broom::tidy(model_2) %>%
   pack_rows("Intercepts",4,10)
 ```
 
-We see that there is a negligible interaction effect, furthermore it is worth noting that the effect size for *review requests* is significantly higher than that for *concepts learned*. As for the intercept estimates, we see that they increase as the intercept thresholds increase. This might indicate that a working feedback loop, like the one our app aspires to provide, benefit the stronger students more than the weaker ones. 
-
-it is clear that the 
-Statistical significance was found for both *concepts learned* and *review requests*, but it is worth noticing that the effect size for review requests is almost twice that of reported learning. It is also worth noting that the coefficients are significantly lower for the weaker students than the stronger ones. This results seems to indicate that having a working feedback loop is more beneficial to mid to stronger students than the weaker ones. 
-
+We see that there is a negligible interaction effect, furthermore it is worth noting that the effect size for *review requests* is significantly higher than that for *concepts learned* (Figure \@ref(fig:concept-count-vs-final-grade). As for the intercept estimates, we see that they increase in concert with the intercept thresholds. This might indicate that a working feedback loop, like the one our system aspires to provide, benefit the stronger students more than the weaker ones. 
 
 ```{r, include = FALSE}
 cor.test(model_2data$review_requests, 
@@ -636,7 +625,7 @@ It is important to keep in mind that while the results reported are congruent wi
 
 # Conclusion
 
-The results reported in this study are certainly encouraging. We see correlational evidence congruent with our hypothesis that the mobile app can indeed create a workable feedback loop, and that this may be beneficial to the student. Further research is clearly merited to draw inferences about the usefulness of the software for the *instructor*, a question that we were unable to explore empirically given our N of 1.
+The results reported in this study are certainly encouraging. We see correlational evidence congruent with our hypothesis that the mobile app can indeed create a workable feedback loop, and that this may be beneficial to the student. Further research is clearly merited to draw inferences about the usefulness of the software for the *instructor*, a question that we were unable to explore empirically given our N of 1 instructor.
 
 
 # References
