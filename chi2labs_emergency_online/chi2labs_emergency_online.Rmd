@@ -2,7 +2,7 @@
 title: |
   \begin{center}\rule{1\linewidth}{2pt}\end{center}
   \text{Chi Square Mobile for Emergency Onlined Courses}
-  \text{Field Test Results}
+  \text{Preliminary Results from a Field Test}
   \begin{center}\rule{1\linewidth}{2pt}\end{center}
 subtitle: |
   A Preprint
@@ -13,7 +13,7 @@ keywords:
   - Learning Loss
   - Covid Pandemic
 bibliography: references.bib
-biblio-style: unsrt
+biblio-style: apa
 output: 
   bookdown::pdf_document2:
     toc: false
@@ -26,7 +26,7 @@ library(tidyverse)
 library(kableExtra)
 library(magrittr)
 knitr::opts_chunk$set(echo=FALSE, message=FALSE, warning = FALSE)
-#knitr::opts_chunk$set(fig.pos = "H", out.extra = "")
+knitr::opts_chunk$set(fig.pos = "H", out.extra = "")
 options(knitr.kable.NA = '')
 
 ## Data 
@@ -83,20 +83,16 @@ from this deployment.
 ---
 
 # Introduction 
-In the Republic of Argentina the COVID-19 pandemic was declared toward the end of February of 2020. Our geographic location in the southern hemisphere meant that it his toward the end of summer, with most schools coming off a two-month summer break. The emergency measures put in place by public health authorities meant that thousands of courses which would normallly be taught in a face-to-face setting would now have to be onlined. While most institutions have access to learning management systems, these sytems were unfamiliar to most instructors and widely deemed unsuited for the purpose, and most instructors opted for a synchronous format using some kind of videoconferencing system such as Meet, Teams or Big Blue Button. Legal and administrative requirements stating that a course session needed to have a start and end time also tilted the weight in favor of these options. 
-
-# The Concept of Learning Loss 
-
-## Non verbal communication
+In Argentina the COVID-19 pandemic was declared toward the end of February of 2020. Our geographic location in the southern hemisphere meant that it his toward the end of summer, with most schools coming off a two month summer break. The emergency measures put in place by public health authorities meant that thousands of courses which would normallly be taught in a face-to-face setting would now have to be onlined. While most institutions have access to learning management systems, these sytems were unfamiliar to most instructors and widely deemed unsuited for the purpose, and most instructors opted for a synchronous format using some kind of videoconferencing system such as Meet, Teams or Big Blue Button. Legal and administrative requirements stating that a course session needed to have a start and end time also tilted the weight in favor of these options. 
 
 # The Chi Square Mobile App 
 
-In the given 
+The *Chi Square Mobile App* was orignally developed ot augment the feedback loop in a traditional classrooms settings. Given the emerging context we decided to make the necessary changes to repurpose the development for use in the situation we found ourselves in. The app was built with several R packages, the most important ones of which were: *shinyMobile*[@shinyMobile:2020] and *chi2Mobile*[@chi2Mobile:2020]; and *Android Studio*[@androidstudio:2020], and the necessary updates adjustments were made before it was made available in the Google play store. The system has two main interfaces, one for students and one for instructors.
 
-Build with several R packages, the most important ones of which were: {shinyMobile}[@shinyMobile:2020] and {chi2Mobile}[@chi2Mobile:2020].
+## Student App
+The student app prompts the student when a request for feedback has been made, typically immediately following the online session. The template used for this field test included star-ratings on four questions, and two open-ended question where the students could enter concepts learned and request reviews of concepts that were not clearly understood. The app also allows for access to a student facing analytics dashboard, and a calendar interface. 
 
-
-In Figure \ref{fig:studentapp} we see the main interfaces.
+In Figure \ref{fig:studentapp} we see the main interfaces for the student.
 
 \begin{figure}[H]
 \centering
@@ -107,6 +103,9 @@ In Figure \ref{fig:studentapp} we see the main interfaces.
 \label{fig:studentapp}
 \end{figure}
 
+## Instructor App
+
+The instructor app provides functionality for the instructor to request feedback (or automate process this with an scheduler) using one of the templates available, or by creating a custom questionaire. The instructor has access to summary statistics for the feedback given, including linguistic analyses for the open-ended question types. There is also a recommendation engine which will propose topics for review and make content recommendations. The instructor app also provides analytics on the progress of students, and ties in to an early warning systems to detect students at high risk of failure. 
 
 Figure \@ref(fig:instructorapp) Shows some of the interfaces available for the instructor.
 
@@ -174,11 +173,11 @@ quiz_answers %>%
   scale_y_continuous(limits = c(1,5))
 ```
 
-## Real use of scale
+## Actual Use of Scale
 
 While the students have five options to choose from when giving a star rating, it is not necessarily clear whether they in fact use the whole scale. Figure \@ref(fig:star-ratings-overall) shows the distribution of stars for each of the four star-rated questions used in the questionnaire.
 
-```{r star-ratings-overall, fig.cap="Comparison of Star Ratings"}
+```{r star-ratings-overall, fig.cap="Comparison of Star Ratings", fig.height=3}
 quiz_answers %>% 
   filter(question %in% c("Calidad de la conectividad", "Claridad de la(s) lectura(s)", "Claridad de la presentación", "Conocimentos previos" )) %>% 
   mutate(Stars = as.numeric(answer)) %>% 
@@ -297,7 +296,8 @@ rm(tmp);rm(tmp2);
   select(Question,`N/A`, Norm, Comma, `Long form`) %>%
     knitr::kable(caption = "Input Strategies Observed",
                  booktabs = TRUE) %>%
-    add_header_above(c(" ", " ", "Format" = 3), bold = TRUE, italic = TRUE)
+    add_header_above(c(" ", " ", "Format" = 3), bold = TRUE, italic = TRUE) %>% 
+    kable_styling(latex_options = "hold_position")
 ```
 Except for the non-reply, which is a legitimate answer to any of the questions posed, the format of the feedback is significant to the type of processing that is needed to extract, summarize and analyze the linguistic data.
 ```{r}
@@ -335,8 +335,6 @@ tmp %>%
 ```
 
 ## N-gram Analysis
-
-N-gram analysis was performed [@tidytext:2016] on the feedback data. The results are summarized in 
 
 ```{r}
 library(tidytext)
@@ -458,9 +456,7 @@ trigrams <-
 ```
 
 
- 
-table \@ref(tab:unigram-table-concepts-learned) and table \@ref(tab:unigram-table-review-requests), which we have included for completeness, while recognizing tha they may be difficult to interpret without knowledge of the course curriculum in question. It was generally found that the concepts and topics that students reported having learned were in line with the instructors expectations and that the review requests were particularly useful to the instructor in organizing course. The lack of any (relevant) review requests for weeks seven, nine and ten are also related to the organization of the course, as evaluations were due around this time. Finally we note that in week thirteen several of the students chose to use the *request for feedback* field in the app to write thank you notes to the instructor and teaching assistants. This is yet another example of how the user is king when it comes to interacting with computer systems: they will use however they please, and ways that make sense to them, irregardless of the intent of the designer of the system.
- 
+N-gram analysis was performed [@tidytext:2016] on the feedback data. The results from the unigram analysis of *concepts learned* are summarized in Table \@ref(tab:unigram-table-concepts-learned), and those for *review requests* are summarized in Table \@ref(tab:unigram-table-review-requests). 
 ```{r unigram-table-concepts-learned}
   unigrams %>% 
     filter(question == "Conceptos que aprendiste" ) %>% 
@@ -470,11 +466,11 @@ table \@ref(tab:unigram-table-concepts-learned) and table \@ref(tab:unigram-tabl
                  caption = "Reported Concepts Learned per Week",
                  linesep = c(rep("",10),"\\addlinespace")) %>% 
     row_spec(c(1,12), bold=TRUE) %>% 
-    kable_styling(latex_options = c( "scale_down"))
+    kable_styling(latex_options = c( "scale_down", "hold_position"))
+  #kable_styling(latex_options = "hold_position")
+
+
 ```
-
-
-
 ```{r unigram-table-review-requests}
 
   unigrams %>% 
@@ -485,12 +481,17 @@ table \@ref(tab:unigram-table-concepts-learned) and table \@ref(tab:unigram-tabl
                  caption = "Requests for Review",
                  linesep = c(rep("",10),"\\addlinespace")) %>% 
     row_spec(c(1,12), bold=TRUE) %>% 
-    kable_styling(latex_options = c( "scale_down"))
+    kable_styling(latex_options = c( "scale_down", "hold_position")) 
+#    kable_styling(latex_options = "hold_position")
+
 ```
+We have included these summaries for illustrative purposes, while recognizing that they may be difficult to interpret without knowledge of the course curriculum in question. Bigram and trigram analyses were also performed, but have not reported here.
 
-## Statistical Modeling
+It was generally found that the concepts and topics that students reported having learned were in line with the instructor's expectations and that the review requests were particularly useful to the instructor in organizing course. The lack of any (relevant) review requests for weeks seven, nine and ten are also related to the organization of the course, as evaluations were due around this time. Finally we note that in week thirteen several of the students chose to use the *request for feedback* field in the app to write thank you notes to the instructor and teaching assistants. This is yet another example of how the user is king when it comes to interacting with computer systems: they will use however they please, and ways that make sense to them, irregardless of the intent of the designer of the system.
 
-As pointed out by e.g. @dietrichson_2020blog distribution of grades do typically not conform to statistical normality. In the case of the data at our disposal, the grades are ostensibly given on a scale from on to ten, with four being the lowest passing grade. In practice the lower end of the scale is not used and a two (2) is often granted as a universal *Fail*. For our statistical modeling we assumed that the variable *course grade* would be measured on an ordinal scale.
+# Statistical Modeling
+
+As pointed out by e.g. @dietrichson_2020blog distribution of grades do typically not conform to statistical normality. In the case of the data at our disposal, the grades are ostensibly given on a scale from zero to ten, with four being the lowest passing grade. In practice the lower end of the scale is not used and a two (2) is often granted as a universal *Fail*, and zero (0) suggests withdrawal from the course on the part of the student. For our statistical modeling we assumed that the variable *course grade* would be measured on an ordinal scale, with the range (0,4] encoded as *Fail*. 
 
 
 ```{r, include = FALSE}
@@ -526,7 +527,7 @@ quiz_answers2 %>%
   mutate(course_grade = ifelse(course_grade>=4,course_grade,0)) -> my_data
 ```
 
-### Kendall's Tau
+## Kendall's Tau
 
 We computed the raw number of *concepts learned* and *review requests*. To explore the relationship between this measure and course grade we calculated the Kendall rank correlation coefficient (Kendall's $\tau$) between these variables and *course grade*. The results are shown in Table \@ref(tab:kendall-tau). 
 
@@ -547,16 +548,17 @@ my_data %$%
   ) %>%
   knitr::kable(caption="Kendalls $\\tau$", booktabs=TRUE, digits = 4) %>%
   kable_styling() %>%
-  add_header_above(c(" "=1,"Test statistics"=3))
+  add_header_above(c(" "=1,"Test statistics"=3)) %>% 
+    kable_styling(latex_options = "hold_position")
 ``` 
 
-While the correlation coefficients cannot be interpreted as a percentage (as in the case with Pearson product-moment correlations), $\tau$-values above .3 are generally considered a strong correlation. The z-score and corresponding p-values show that there is a statistically significant relationship between the two variables in question, i.e. each of *learning reported* and *review requests* on the one hand and *course grade* on the other.
+While the correlation coefficients cannot be interpreted as a percentage (as in the case with Pearson product-moment correlations), $\tau$ values above .3 are generally considered a *strong correlation* [@Puka2011]. The z-score and corresponding p values show that there is a statistically significant relationship between the two variables in question, i.e. each of *learning reported* and *review requests* on the one hand and *course grade* on the other.
 
 
 
-### Ordinal Regression
+## Ordinal Regression
 
-While there is an overall strong and significant correlation between the variables in question and the outcome variable, we wanted explore these relationships in more detail. We therefore fitted an ordinal regression model [@MASS2021] with the raw number of concepts learned and review requests as independent variables. This approach allows us to estimate an effect size for the coefficient as well as the different intercepts. We are also able to deal with potential interaction effects between the independent variables. The results of the regression analysis are reported in Table \@ref(tab:ordinal-regression).
+While there is an overall strong and significant correlation between the variables in question and the outcome variable, we wanted explore these relationships in more detail. We therefore fitted an ordinal regression model [@MASS2021; @williams:2020] with the raw number of concepts learned and review requests as independent variables. This approach allows us to estimate an effect size for the coefficient as well as the different intercepts. We are also able to deal with potential interaction effects between the independent variables. The results of the regression analysis are reported in Table \@ref(tab:ordinal-regression).
 
 ```{r, include = FALSE}
 model_2data <- my_data
@@ -594,7 +596,7 @@ broom::tidy(model_2) %>%
   knitr::kable(caption = "Summary for Ordinal Regression Model", 
                booktabs = TRUE,
                digits=3) %>% 
-  kable_styling() %>% 
+    kable_styling(latex_options = "hold_position") %>% 
   pack_rows("Coefficients",1,3) %>% 
   pack_rows("Intercepts",4,10)
 ```
@@ -618,15 +620,23 @@ cor.test(model_2data$learning_reported,as.numeric(model_2data$course_grade), met
 my_data %>% 
   pivot_longer(c(review_requests, learning_reported)) %>% 
   ggplot(aes(y=course_grade, x=value, color=name))+
-  geom_point(alpha=.3)+
-  geom_smooth(method = "lm",lty=2, se=FALSE)+
+  geom_point(alpha=.3,key_glyph="path")+
+  geom_smooth(method = "lm",lty=2, se=FALSE,
+              key_glyph=NULL)+
+  theme(legend.position = "top", legend.title = element_blank())+
   scale_y_continuous(breaks = 0:10, labels = 0:10,limits = c(0,10))+
   ylab("Course Grade")+
-  xlab("Concept Count")
+  xlab("Concept Count")+
+  scale_color_discrete(labels = c(learning_reported = "Learning Reported",review_requests = "Review Requests"))
 ```
 
-### Limitations
+## Limitations
 
-It is important to keep in mind that while the results reported are congruent with our hypothesis that a working feedback loop is beneficial to both students and instructors. 
+It is important to keep in mind that while the results reported are congruent with our hypothesis that a working feedback loop is beneficial to both students and instructors. However, the results reported are *correlational* we cannot infer *causation* given the observational nature of this study. 
+
+# Conclusion
+
+The results reported in this study are certainly encouraging. We see correlational evidence congruent with our hypothesis that the mobile app can indeed create a workable feedback loop, and that this may be beneficial to the student. Further research is clearly merited to draw inferences about the usefulness of the software for the *instructor*, a question that we were unable to explore empirically given our N of 1.
+
 
 # References
