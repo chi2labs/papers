@@ -69,7 +69,7 @@ dietrichson@gmail.com   &  & &Buenos Aires, Argentina\\
 ```{=tex}
 \begin{abstract}
 
-At the onset of the COVID pandemic, thousands of courses were emergency onlined. As a response to these new and unfamiliar conditions a mobile app was developed and deployed to assist instructors in obtaining feedback from students on the evolytion of the course. This paper presents experiences and related findings from this deployment.
+At the onset of the COVID pandemic, thousands of courses were emergency onlined. As a response to these new and unfamiliar conditions a mobile app was developed and deployed to assist instructors in obtaining feedback from students on the evolution of the course. This paper presents experiences and related findings from this deployment. It was found that students who regularly submitted feedback to the instructor did better than those who didn't and that those students who requested review of specific topic did significantly better than their colleagues.  
 
 \end{abstract}
 ```
@@ -77,11 +77,11 @@ At the onset of the COVID pandemic, thousands of courses were emergency onlined.
 ---
 
 # Introduction 
-In Argentina the COVID-19 pandemic was declared toward the end of February of 2020. In the southern hemisphere this toward the end of summer, with most schools coming off a two month summer break. The emergency measures put in place by public health authorities meant that thousands of courses which would normally be taught in a face-to-face setting would now have to be moved online. While most educational institutions in Argentina have access to learning management systems, these systems were unfamiliar to most instructors and widely deemed unsuited for the purpose. Most instructors opted for a synchronous format using some kind of videoconferencing system such as *Meet*, *Teams* or *Big Blue Button*. Legal and administrative requirements stating that a course session needed to have a start and end time as well as dates also tilted the weight in favor of synchronous options. 
+In Argentina the COVID-19 pandemic was declared in the early part of March 2020. In the southern hemisphere this was toward the end of summer, with most schools coming off a two month summer break. The emergency measures put in place by public health authorities meant that thousands of courses which would normally be taught in a face-to-face setting would now have to be moved online. While most educational institutions in Argentina have access to learning management systems, these systems were unfamiliar to most instructors and widely deemed unsuited for the purpose. Most instructors opted for a synchronous format using some kind of videoconferencing system such as *Google Meet*, *Microsoft Teams* or *Big Blue Button*. Legal and administrative requirements stating that a course session needed to have a start and end time as well as dates also tilted the weight in favor of synchronous options. 
 
 # The Chi Square Mobile App 
 
-The *Chi Square Mobile App* was originally developed to augment the feedback loop in traditional classrooms settings. Given the emerging context we decided to make the necessary changes to repurpose the development for use in the situation we found ourselves in. The app was built with several R packages, the most important ones of which were: *shinyMobile* [@shinyMobile:2020] and *chi2Mobile* [@chi2Mobile:2020] as well as *Android Studio*[@androidstudio:2020]. The necessary updates and adjustments were made before it was released in the Google play store. The system has two main interfaces, one for students and one for instructors.
+The *Chi Square Mobile App* was originally developed to augment the feedback loop in traditional classroom settings. Given the emerging context we decided to make the necessary changes to repurpose the development for use in the situation we found ourselves in. The app was built with several R packages, the most important ones of which were: *shinyMobile* [@shinyMobile:2020] and *chi2Mobile* [@chi2Mobile:2020] as well as *Android Studio* [@androidstudio:2020]. The necessary updates and adjustments were made before it was released in the Google play store. The system has two main interfaces, one for students and one for instructors.
 
 ## Student App
 The student app prompts the student when a request for feedback is available --typically immediately following the online live session. A similar prompt is received when the deadline for completing the feedback approached. By default the deadline was five days after the request was made, and an email reminder was also sent out simultaneously with the in-app prompts. 
@@ -99,7 +99,7 @@ The template used for this field test included star-ratings on four questions, a
 
 ## Instructor App
 
-The instructor app provides functionality for the instructor to request feedback (or automate process this with an scheduler) using one of the templates available, or by creating a custom questionnaire. The instructor has access to summary statistics for the feedback given, including linguistic analyses for the open-ended question types. There is also a recommendation engine which will propose topics for review and make content recommendations. The instructor app also provides analytics on the progress of students, and ties in to an early warning systems to detect students at high risk of failure. Figure \@ref(fig:instructorapp) shows some of the interfaces available for the instructor.
+The instructor app provides functionality for the instructor to request feedback (or automate the process this with a scheduler) using one of the templates available, or by creating a custom questionnaire. The instructor has access to summary statistics for the feedback given, including linguistic analyses for the open-ended question types. There is also a recommendation engine which will propose topics for review and make content recommendations. The instructor app also provides analytics on the progress of students, and ties in to an early warning system to detect students at high risk of failure. Figure \@ref(fig:instructorapp) shows some of the interfaces available for the instructor.
 
 \begin{figure}[H]
 \centering
@@ -113,7 +113,10 @@ The instructor app provides functionality for the instructor to request feedback
 
 # Context and Participants
 
-A cohort of `r nrow(participants)` students, enrolled in *Gramatica*, an introductory level linguistic course taught by one of the authors, were asked to download and install the application on their devices. A total of `r quiz_answers$respondent_id %>% unique %>% length` complied with these instructions and responded at least once. The course had a duration of sixteen weeks, with additional final exam options at the end of the semester. Figure \ref{fig:respondents-per-week} shows the number of students who responded to the request for feedback during the semester. We see a sharp drop-off in week six, and a relatively stable number thereafter.
+According to official statistics for Argentina [@indec:2020], only 41.4% of students have access to a computer, while over 84% access the internet primarily through a mobile device. These statistics roughly mirror the situation in our cohort, so it was important to provide tools that work well on mobile platform.
+
+A cohort of `r nrow(participants)` students, enrolled in *Gramatica*, an introductory level linguistic course taught by one of the authors at a public university in Argentina, were asked to download and install the application on their devices. A total of `r quiz_answers$respondent_id %>% unique %>% length` complied with these instructions and responded at least once. The course had a duration of sixteen weeks, with additional final exam options at the end of the semester. Figure \ref{fig:respondents-per-week} shows the number of students who responded to the request for feedback during the semester. We see a sharp drop-off in week six, and a relatively stable number thereafter.
+
 
 ```{r respondents-per-week, fig.height=2, fig.cap="Respondents per Week of the Course"}
 quiz_answers$date <- as.Date(quiz_answers$time_stamp)
@@ -280,7 +283,7 @@ rm(tmp);rm(tmp2);
     count %>% 
     rename(Question=question) %>% 
     pivot_wider(names_from = "response_type", values_from = "n") %>% 
-  select(Question,`N/A`, Norm, Comma, `Long form`) %>%
+  select(Question,"None" = `N/A`, Norm, Comma, `Long form`) %>%
     knitr::kable(caption = "Input Strategies Observed",
                  booktabs = TRUE) %>%
     add_header_above(c(" ", " ", "Format" = 3), bold = TRUE, italic = TRUE) %>% 
@@ -306,7 +309,7 @@ concepts_requested <- tmp %>% filter(question != "Conceptos que aprendiste") %>%
 
 ## Number of Concepts Learned and Requested
 
-We parsed the data using the appropriate technique depending on the input strategy used by the students. We then counted the number of concepts in all non-empty inputs across the fourteen weeks of the course. Figure \@ref(fig:concepts-per-student) summarizes these results. We see that requests for review of concepts remained relatively stable throughout the course, with a mean of `r mean(concepts_requested) %>% round(digits=1)` and a standard deviation of `r sd(concepts_requested) %>% round(digits=1)`, while the number of concepts learned show a significant increase in weeks 9-11. It is also worth noting that at no point during the course do the students on average report learning fewer concepts than those needing review.
+We parsed the data using the appropriate technique depending on the input strategy used by the students, so that our unit of analysis would be a one or multiword *concept*. We then counted the number of concepts in all non-empty inputs across the fourteen weeks of the course. Figure \@ref(fig:concepts-per-student) summarizes these results. We see that requests for review of concepts remained relatively stable throughout the course, with a mean of `r mean(concepts_requested) %>% round(digits=1)` and a standard deviation of `r sd(concepts_requested) %>% round(digits=1)`, while the number of concepts learned show a significant increase in weeks 9-11. It is also worth noting that at no point during the course do the students on average report learning fewer concepts than those needing review.
 
 
 ```{r concepts-per-student, fig.cap="Concepts Input per Student Per Week of the Course"}
@@ -627,5 +630,8 @@ It is important to keep in mind that while the results reported are congruent wi
 
 The results reported in this study are certainly encouraging. We see correlational evidence congruent with our hypothesis that the mobile app can indeed create a workable feedback loop, and that this may be beneficial to the student. Further research is clearly merited to draw inferences about the usefulness of the software for the *instructor*, a question that we were unable to explore empirically given our N of 1 instructor.
 
+# Acknowledgements
+
+We thank Dr. John Whitmer of the American Federation of Scientists for comments that greatly improved this manuscript.
 
 # References
