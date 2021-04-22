@@ -448,14 +448,14 @@ trigrams <-
 
 N-gram analysis was performed [@tidytext:2016] on the feedback data. The results from the unigram analysis of *concepts learned* are summarized in Table \@ref(tab:unigram-table-concepts-learned), and those for *review requests* are summarized in Table \@ref(tab:unigram-table-review-requests). 
 ```{r unigram-table-concepts-learned}
-  unigrams %>% 
-    filter(question == "Conceptos que aprendiste" ) %>% 
-    .extract_top_ngrams_by_week_of_course() %>% 
-    .create_ngram_matrix() %>% 
-    knitr::kable(booktabs=TRUE, align = 'l', 
+  unigrams %>%
+    filter(question == "Conceptos que aprendiste" ) %>%
+    .extract_top_ngrams_by_week_of_course() %>%
+    .create_ngram_matrix() %>%
+    knitr::kable(booktabs=TRUE, align = 'l',
                  caption = "Reported Concepts Learned per Week",
-                 linesep = c(rep("",10),"\\addlinespace")) %>% 
-    row_spec(c(1,12), bold=TRUE) %>% 
+                 linesep = c(rep("",10),"\\addlinespace")) %>%
+    row_spec(c(1,12), bold=TRUE) %>%
     kable_styling(latex_options = c( "scale_down", "hold_position"))
   #kable_styling(latex_options = "hold_position")
 
@@ -463,15 +463,15 @@ N-gram analysis was performed [@tidytext:2016] on the feedback data. The results
 ```
 ```{r unigram-table-review-requests}
 
-  unigrams %>% 
-    filter(question != "Conceptos que aprendiste" ) %>% 
-    .extract_top_ngrams_by_week_of_course() %>% 
-    .create_ngram_matrix() %>% 
-    knitr::kable(booktabs=TRUE, align = 'l', 
+  unigrams %>%
+    filter(question != "Conceptos que aprendiste" ) %>%
+    .extract_top_ngrams_by_week_of_course() %>%
+    .create_ngram_matrix() %>%
+    knitr::kable(booktabs=TRUE, align = 'l',
                  caption = "Requests for Review",
-                 linesep = c(rep("",10),"\\addlinespace")) %>% 
-    row_spec(c(1,12), bold=TRUE) %>% 
-    kable_styling(latex_options = c( "scale_down", "hold_position")) 
+                 linesep = c(rep("",10),"\\addlinespace")) %>%
+    row_spec(c(1,12), bold=TRUE) %>%
+    kable_styling(latex_options = c( "scale_down", "hold_position"))
 #    kable_styling(latex_options = "hold_position")
 
 ```

@@ -1,0 +1,68 @@
+---
+title: "topic_modelling"
+author: "Aleksander Dietrichson, PhD"
+date: "4/20/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(kableExtra)
+library(magrittr)
+library(tidytext)
+library(hunspell)
+quiz_answers2 <- 
+  readr::read_rds(here::here("data","quiz_answers2.rds"))
+
+
+```
+
+### Spell Checking
+
+```{r}
+stop_words_unigrams <- data.frame(
+  ngram = c(
+    "que",
+    "y",
+    "de",
+    "la",
+    "los",
+    "las",
+    "al",
+    "del",
+    "un",
+    "una",
+    "a",
+    "vs",
+    "me",
+    "sobre",
+    "es",
+    "no",
+    "o",
+    "e",
+    "en",
+    "se",
+    "entre",
+    "como",
+    "con",
+    "el",
+    "d",
+    "ella")
+)
+my_dictionary <- dictionary("es_AR", add_words = c("ceci","Ceci"))
+
+unigrams <-
+  quiz_answers2 %>%
+  ungroup %>% 
+  select(concepts, question, week_of_course) %>% 
+  unnest_tokens(ngram, concepts, token = "words" ) %>% 
+  anti_join(stop_words_unigrams) 
+correct <- hunspell_check(unigrams$ngram,dict = my_dictionary)
+unigrams$correct <- correct
+suggestions <- hunspell_suggest(unigrams$ngram[!correct], dict = my_dictionary)
+unigrams$suggestion <- unigrams$ngram
+unigrams$suggestion[!correct|is.na(correct)] <- 
+  purrr::map_chr(suggestions, ~{ifelse(is.null(.x),"",.x[1])}) 
+```
+
