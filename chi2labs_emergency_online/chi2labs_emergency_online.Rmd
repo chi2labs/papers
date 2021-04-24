@@ -324,10 +324,11 @@ tmp %>%
   scale_y_continuous(limits = c(0,15))
 ```
 
-## N-gram Analysis
+## Semantic Analysis
 
 ```{r}
 library(tidytext)
+library(hunspell)
 ## Stop_words for unigrams
 stop_words_unigrams <- data.frame(
   ngram = c(
@@ -358,8 +359,53 @@ stop_words_unigrams <- data.frame(
     "d",
     "ella")
 )
-
-# TODO: Something with accents - they are not consistently added.
+domain_words <- c(
+  "paradigmáticas",
+  "paradigmática",
+  "paradigmatica",
+  "semiótico",
+  "estructuralista",
+  "situacional",
+  "diacrónica",
+  "gramticalidad",
+  "gramáticales",
+  "pseudo",
+  "inergativos",
+  "inacusativos",
+  "temporoaspectual",
+  "alomorfo",
+  "extraoracional",
+  "encorchetamiento",
+  "agramaticalidad",
+  "exofóricas",
+  "exofórica",
+  "exofórico",
+  "exofóricos",
+  "endofóricas",
+  "endofórica",
+  "endofórico",
+  "endofóricos",
+  "proformas",
+  "reclasificación",
+  "reclasificacion",
+  "diacrítico",
+  "subcategorias",
+  "pseudocopulativos",
+  "pseudocopulativo",
+  "subcategorías",
+  "eventivos",
+  "metafunciones",
+  "metafunción"
+  )
+authors <- c(
+  "haliday",
+  "saussure",
+  "chomsky"
+  )
+my_dictionary <- dictionary("es_AR", add_words = c(
+  domain_words,
+  authors,
+  "ceci","Ceci"))
 
 unigrams <-
   quiz_answers2 %>%
@@ -367,6 +413,12 @@ unigrams <-
   select(concepts, question, week_of_course) %>% 
   unnest_tokens(ngram, concepts, token = "words" ) %>% 
   anti_join(stop_words_unigrams) 
+correct <- hunspell_check(unigrams$ngram,dict = my_dictionary)
+unigrams$correct <- correct
+suggestions <- hunspell_suggest(unigrams$ngram[!correct], dict = my_dictionary)
+unigrams$suggestion <- unigrams$ngram
+unigrams$suggestion[!correct|is.na(correct)] <- 
+  purrr::map_chr(suggestions, ~{ifelse(is.null(.x),"",.x[1])}) 
 
 ```
 
@@ -401,21 +453,6 @@ trigrams <-
     arrange(ngram, .by_group = TRUE)
 }
 
-  
-  .create_ngram_matrix_old <- function(tmp, ncol = 7) {
-    # 7 column matrix
-    ret  <- matrix(nrow = 22, ncol = 7)
-    # Insert "headings"
-    ret[1,] <- paste0("Week ",1:7)
-    ret[2:11,] <- tmp$ngram[1:70]
-    ret[12,] <- paste0("Week ",8:14)
-    ret[13:22,] <- tmp$ngram[71:140]
-    ret 
-  }
-```
-
-```{r}
-
 .create_ngram_matrix <- function(x, n_col = 7, header_prefix = "Week ") {
   # Create layout we want c(1,8,2,9,3,10 etc
   max_weeks <- max(x$week_of_course)
@@ -446,25 +483,32 @@ trigrams <-
 ```
 
 
+### Spell Check
+
+The *hunspell* [@hunspell] package was used to perform spell-checking on the feedback data, and several miss-spelled words were encountered.  Some were correctly spelled domain specific terminology and names of authors which were mentioned during the course. We added domain specific terms and authors' names to a custom dictionary and were left with `r (sum(!unigrams$correct, na.rm = TRUE)/nrow(unigrams)) %>% signif(2)*100`% "legitimate" miss-spellings^[Most of which were due to lack of the Spanish tilde and umlaut signs. E.g.: *categoria* instead of *categoría*, *ambiguedad* instead of *ambigüedad*. These are easily and frequently omitted in input using a mobile device]. The appropriate replacements were made as suggested by the hunspell algorithm.
+
+### N-gram Analysis
+
 N-gram analysis was performed [@tidytext:2016] on the feedback data. The results from the unigram analysis of *concepts learned* are summarized in Table \@ref(tab:unigram-table-concepts-learned), and those for *review requests* are summarized in Table \@ref(tab:unigram-table-review-requests). 
 ```{r unigram-table-concepts-learned}
-  unigrams %>%
-    filter(question == "Conceptos que aprendiste" ) %>%
-    .extract_top_ngrams_by_week_of_course() %>%
-    .create_ngram_matrix() %>%
-    knitr::kable(booktabs=TRUE, align = 'l',
-                 caption = "Reported Concepts Learned per Week",
-                 linesep = c(rep("",10),"\\addlinespace")) %>%
-    row_spec(c(1,12), bold=TRUE) %>%
-    kable_styling(latex_options = c( "scale_down", "hold_position"))
+unigrams %>%
+  filter(question == "Conceptos que aprendiste" ) %>%
+  select(ngram = suggestion, week_of_course) %>% #use spell-checked
+  .extract_top_ngrams_by_week_of_course() %>%
+  .create_ngram_matrix() %>%
+  knitr::kable(booktabs=TRUE, align = 'l',
+               caption = "Reported Concepts Learned per Week",
+               linesep = c(rep("",10),"\\addlinespace")) %>%
+  row_spec(c(1,12), bold=TRUE) %>%
+  kable_styling(latex_options = c( "scale_down", "hold_position"))
   #kable_styling(latex_options = "hold_position")
-
-
 ```
+
 ```{r unigram-table-review-requests}
 
   unigrams %>%
     filter(question != "Conceptos que aprendiste" ) %>%
+   select(ngram = suggestion, week_of_course) %>% #use spell-checked
     .extract_top_ngrams_by_week_of_course() %>%
     .create_ngram_matrix() %>%
     knitr::kable(booktabs=TRUE, align = 'l',
@@ -552,7 +596,7 @@ While the correlation coefficients cannot be interpreted as a percentage (as in 
 
 
 
-## Ordinal Regression
+## Ordinal Regression Analysis
 
 While there is an overall strong and significant correlation between the variables in question and the outcome variable, we wanted explore these relationships in more detail. We therefore fitted an ordinal regression model [@MASS2021; @williams:2020] with the raw number of concepts learned and review requests as independent variables. This approach allowed us to estimate an effect size for the coefficient as well as the different intercepts. We are also able to deal with potential interaction effects between the independent variables. The results of the regression analysis are reported in Table \@ref(tab:ordinal-regression), with effect sizes reported as log-odds.
 
