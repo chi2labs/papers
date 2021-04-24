@@ -1,12 +1,6 @@
----
-title: "topic_modelling"
-author: "Aleksander Dietrichson, PhD"
-date: "4/20/2021"
-output: html_document
----
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r setup2, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
 library(tidyverse)
 library(kableExtra)
 library(magrittr)
@@ -50,7 +44,54 @@ stop_words_unigrams <- data.frame(
     "d",
     "ella")
 )
-my_dictionary <- dictionary("es_AR", add_words = c("ceci","Ceci"))
+
+domain_words <- c(
+  "paradigmáticas",
+  "paradigmática",
+  "paradigmatica",
+  "semiótico",
+  "estructuralista",
+  "situacional",
+  "diacrónica",
+  "gramticalidad",
+  "gramáticales",
+  "pseudo",
+  "inergativos",
+  "inacusativos",
+  "temporoaspectual",
+  "alomorfo",
+  "extraoracional",
+  "encorchetamiento",
+  "agramaticalidad",
+  "exofóricas",
+  "exofórica",
+  "exofórico",
+  "exofóricos",
+  "endofóricas",
+  "endofórica",
+  "endofórico",
+  "endofóricos",
+  "proformas",
+  "reclasificación",
+  "reclasificacion",
+  "diacrítico",
+  "subcategorias",
+  "pseudocopulativos",
+  "pseudocopulativo",
+  "subcategorías",
+  "eventivos",
+  "metafunciones",
+  "metafunción"
+  )
+authors <- c(
+  "haliday",
+  "saussure",
+  "chomsky"
+  )
+my_dictionary <- dictionary("es_AR", add_words = c(
+  domain_words,
+  authors,
+  "ceci","Ceci"))
 
 unigrams <-
   quiz_answers2 %>%
@@ -64,5 +105,44 @@ suggestions <- hunspell_suggest(unigrams$ngram[!correct], dict = my_dictionary)
 unigrams$suggestion <- unigrams$ngram
 unigrams$suggestion[!correct|is.na(correct)] <- 
   purrr::map_chr(suggestions, ~{ifelse(is.null(.x),"",.x[1])}) 
+```
+
+## Topic Modelling
+
+### Spell Check
+
+The @hunspell package was used to perform spell-checking of the unigrams, and as expected several miss-spelled words were encountered.  some were correctly spelled domain specific terminology and names of authors which were mentioned during the course. We added domain specific terms and authors' names to a custom dictionary and were left with `r (sum(!unigrams$correct, na.rm = TRUE)/nrow(unigrams)) %>% signif(2)*100`% "legitimate" miss-spellings^[Most of which were due to lack of the Spanish tilde and umlaut signs. E.g.: *categoria* instead of *categoría*, *ambiguedad* instead of *ambigüedad*. These are easily and frequently omitted in input using a mobile device], and made the appropriate replacements as suggested by the hunspell algorithm.
+
+```{r}
+# For installation of topicmodels you will need gsl libraries installed.
+# On ubuntu: sudo apt-get install libgsl-dev
+library(topicmodels)
+
+unigrams %>% 
+  group_by(suggestion,week_of_course) %>% 
+  count() %>% 
+  cast_dtm(week_of_course,suggestion,n) -> my_dtm
+
+my_lda <- LDA(my_dtm, k=14, control = list(seed=1234))
+tidy(my_lda, matrix="beta") -> my_tidy_lda
+```
+
+### Determining Optimal Number of Topics
+
+```{r}
+library(ldatuning)
+# Also install mpfr:
+# sudo apt-get install libmpfr-dev
+result <- FindTopicsNumber(
+  my_dtm,
+  topics = seq(from = 2, to = 15, by = 1),
+  metrics = c("Griffiths2004", "CaoJuan2009", "Arun2010", "Deveaud2014"),
+  method = "Gibbs",
+  control = list(seed = 77),
+  mc.cores = 8L, # I have 8 on my computer
+  verbose = TRUE
+)
+
+FindTopicsNumber_plot(result)
 ```
 
