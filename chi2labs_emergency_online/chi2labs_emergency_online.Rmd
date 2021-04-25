@@ -569,7 +569,7 @@ For our statistical modeling we therefore assumed that the variable *course grad
 
 ## Kendall's Tau
 
-We computed the raw number of *concepts learned* and *review requests*. To explore the relationship between this measure and course grade we calculated the Kendall rank correlation coefficient (Kendall's $\tau$) between these variables and *course grade*. The results are shown in Table \@ref(tab:kendall-tau). 
+We computed the raw number of *concepts learned* and *review requests*. To explore the relationship between this measure and course grade we calculated the Kendall rank correlation coefficient (Kendall's $\tau$) between these variables and *course grade*. The results are shown in Table \@ref(tab:kendall-tau). The use of this non-parametric technique allows for analysis of variables that are on an ordinal scale, such as *course grade* in this case. Since the method is based on *ranks* is it also conveniently insensitive to outliers which were also found in the feedback data.
 
 
 ```{r kendall-tau}
@@ -665,6 +665,42 @@ my_data %>%
   xlab("Concept Count")+
   scale_color_discrete(labels = c(learning_reported = "Learning Reported",review_requests = "Review Requests"))
 ```
+
+
+```{r, include = FALSE}
+my_summary <- summary(model_2)
+
+tmpDF <- data.frame(
+  intercept = my_summary$coefficients[1:10],
+  slope = my_summary$coefficients[1:10],
+   Cutoff = rownames(my_summary$coefficients)[1:10]
+  ,
+   Color = RColorBrewer::brewer.pal(10, "Set3")
+  )
+tmpDF
+
+
+gg5 <- ggplot(tmpDF)+
+  lapply(1:nrow(tmpDF), function(i){
+    stat_function(
+      fun = . %>% 
+        { 
+          l <- exp(tmpDF$intercept[i]+tmpDF$slope[i]*.) 
+          l/(1+l)
+        }, color=tmpDF$Color[i])
+      
+    })+
+  geom_text(aes(x=0,
+                y=(
+                  exp(intercept)/(1+exp(intercept))
+                  ), label = Cutoff), color=tmpDF$Color,nudge_y = .05)+
+  xlim(-100,100)+
+  ylim(0,1)
+gg5 
+
+
+```
+
 
 ## Limitations
 
